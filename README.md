@@ -1,3 +1,5 @@
+A python client for ruter.no, made using the API at http://labs.ruter.no/
+
 Example run of alpha:
 
 wget --header "Accept: application/xml" https://reisapi.ruter.no/stopvisit/getdepartures/3010407 -O ruter.temp
