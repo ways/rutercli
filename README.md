@@ -2,6 +2,7 @@ A python client for ruter.no, made using the API at http://labs.ruter.no/
 
 Example run of alpha:
 
+```
 wget --header "Accept: application/xml" https://reisapi.ruter.no/stopvisit/getdepartures/3010407 -O ruter.temp
 
 ./ruter.py -l -v 3010407
@@ -28,3 +29,4 @@ Linje/Destinasjon        Spor Tid             Type Forsinkelse
  28 Helsfyr T            1    16:00:00        🚌
 363 John Colletts plass  1    16:01:00        🚌    [PT125S]
 
+```
