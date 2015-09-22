@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 # Copyright 2015 Lars Falk-Petersen.
@@ -16,10 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-system_version = '0.2'
+system_version = '0.3'
 system_name = 'ruter.py'
 
-import sys, datetime, time, urllib2, codecs, unicodedata, re
+import sys, datetime, time, urllib.request, urllib.error, urllib.parse, codecs, unicodedata, re
 import xml.etree.ElementTree as ET
 
 ttycode=sys.stdin.encoding
@@ -29,14 +29,14 @@ ttycode=sys.stdin.encoding
 # TransportationType (in SOAP) 	Num value (in JSON response)
 #bus 	0 #ferry 	1 #rail 	2 #tram 	3 #metro 	4
 TransportationType = {
-  'bus':   u'🚌',
-  'ferry': u'🛥',
-  'rail':  u'🚆',
-  'tram':  u'🚋',
-  'metro': u'Ⓣ',
+  'bus':   '🚌',
+  'ferry': '🛥',
+  'rail':  '🚆',
+  'tram':  '🚋',
+  'metro': 'Ⓣ',
 } #🚇
-stopicon=u"🚏"
-timeicon=u"🕒"
+stopicon="🚏"
+timeicon="🕒"
 
 # html to terminal safe colors
 colors = {
@@ -53,14 +53,14 @@ output=[]
 directions={} # Dict of directions at this stop
 
 def usage():
-  print 'Bruk: %s [-a] [-l] [-n] [-v] <stasjonsnavn|stasjonsid>' % sys.argv[0]
-  print '''
+  print('Bruk: %s [-a] [-l] [-n] [-v] <stasjonsnavn|stasjonsid>' % sys.argv[0])
+  print('''
   -a       ASCII for ikke å bruke Unicode symboler/ikoner
   -l       Bruk lokal fil ruter.temp som xml-kilde (kun for utvikling)
   -n       Begrens treff pr. spor, tilbakefall er 5.
   -v       verbose for utfyllende informasjon
-  '''
-  print system_name, 'version', system_version
+  ''')
+  print(system_name, 'version', system_version)
   sys.exit(1)
 
 def err(string):
@@ -75,39 +75,39 @@ def fetch_stops(filename, searchname):
   start = time.time()
 
   if verbose:
-    print "Parsing stopsfile", filename
+    print("Parsing stopsfile", filename)
   try:
     root = ET.parse(filename)
   except ET.ParseError as error:
-    print "Error loading stopsfile"; print error
+    print("Error loading stopsfile"); print(error)
 
   stop = time.time()
   if verbose:
-    print "File read and parsed in %0.3f ms" % (stop-start)
+    print("File read and parsed in %0.3f ms" % (stop-start))
 
   start = time.time()
 
   for counter, stop in enumerate(root.findall(schema + 'Stop')):
     stopid = int(stop.find(schema + 'ID').text)
     stopname = \
-      unicodedata.normalize('NFC', unicode(stop.find(schema + 'Name').text.lower().replace(' ', '').replace('(', '').replace(')', '').replace('-','')))
+      unicodedata.normalize('NFC', str(stop.find(schema + 'Name').text.lower().replace(' ', '').replace('(', '').replace(')', '').replace('-','')))
     if re.match(
       searchname.replace(' ', '').replace('(', '').replace(')', '').replace('-','') + '*',
       stopname):
       if verbose:
-        print "Hit: %d - %s" % (stopid, stopname)
+        print("Hit: %d - %s" % (stopid, stopname))
       result[stopname] = stopid
     if verbose and counter % 1000 == 0:
-      print "Reading stops...", counter
-      print "%d - %s %s" % (stopid, stopname.lower(), searchname)
+      print("Reading stops...", counter)
+      print("%d - %s %s" % (stopid, stopname.lower(), searchname))
 
   stop = time.time()
   if verbose:
-    print "File searched names in %0.3f ms" % (stop-start)
+    print("File searched names in %0.3f ms" % (stop-start))
 
   if verbose:
-    print "Results: ", len(result)
-    print result
+    print("Results: ", len(result))
+    print(result)
   return result
 
 """ Fetch xml file from url, return string """
@@ -117,18 +117,18 @@ def fetch_api_xml(url):
   start = time.time()
   try:
     if verbose:
-      print "fetch_api_xml", url
+      print("fetch_api_xml", url)
 
-    request = urllib2.Request(url, headers={"Accept" : 'application/xml'} )
-    html=urllib2.urlopen(request).read()
-  except urllib2.HTTPError as error:
-    print url, error
+    request = urllib.request.Request(url, headers={"Accept" : 'application/xml'} )
+    html=urllib.request.urlopen(request).read()
+  except urllib.error.HTTPError as error:
+    print(url, error)
   except urllib2.BadStatusline as error:
-    print url, error
+    print(url, error)
 
   stop = time.time()
   if verbose:
-    print "Data fetched in %0.3f ms" % (stop-start)
+    print("Data fetched in %0.3f ms" % (stop-start))
   return html
 
 def parse_xml(xml, filename):
@@ -149,8 +149,8 @@ def convert(str):
 
   result = chardet.detect(str)
   if verbose:
-    print "result"
-    print result,"-",result['encoding']
+    print("result")
+    print(result,"-",result['encoding'])
 
   #return str.decode(result['encoding']).encode("UTF-8")
   try:
@@ -174,14 +174,14 @@ if __name__ == '__main__':
   if '-v' in args:
     verbose = True
     args.pop(args.index('-v'))
-    print args
+    print(args)
 
   if '-n' in args:
     limitresults = args[ args.index('-n')+1 ]
     args.pop(args.index('-n'))
     if verbose:
-      print "limitresults", limitresults
-      print args, stopname
+      print("limitresults", limitresults)
+      print(args, stopname)
 
   if '-l' in args:
     localxml = 'ruter.temp'
@@ -194,33 +194,33 @@ if __name__ == '__main__':
 
 
   if verbose:
-    print "stopname", stopname
+    print("stopname", stopname)
 
   ''' Check if we have number or name '''
   stopid = None
   if not stopname.isdigit():
     if verbose:
-      print "Looking up stopname."
+      print("Looking up stopname.")
     stops = fetch_stops(stopsfile, stopname)
 
     if len(stops) > 10:
-      print "%s ga for mange treff, prøv igjen." % stopname
+      print("%s ga for mange treff, prøv igjen." % stopname)
       sys.exit(3)
     elif len(stops) > 1:
-      print "Flere treff, angi mer nøyaktig:"
-      print stops
+      print("Flere treff, angi mer nøyaktig:")
+      print(stops)
       for key in stops:
-        print "[%d] %s" % (stops[key], key)
+        print("[%d] %s" % (stops[key], key))
       sys.exit(3) #Too many hits
     elif 0 == len(stops):
-      print "Ingen treff på stoppnavn."
+      print("Ingen treff på stoppnavn.")
       sys.exit(4) #No hits
 
-    stopid = stops.itervalues().next()
+    stopid = next(iter(stops.values()))
 
   else:
     if verbose:
-      print "Looking up stopid."
+      print("Looking up stopid.")
     stopid = stopname
 
   xmlroot = None
@@ -281,15 +281,15 @@ if __name__ == '__main__':
       directions[DirectionName] = 0
 
   if verbose:
-    print output
+    print(output)
 
   output.sort()
   ''' Print main output '''
-  print "Linje/Destinasjon             Spor Tid               Type Forsinkelse"
+  print("Linje/Destinasjon             Spor Tid               Type Forsinkelse")
   for counter, outarray in enumerate(output):
     #print outarray
     if limitresults > directions[outarray[0]]:
-      print outarray[1]
+      print(outarray[1])
       directions[outarray[0]]+=1
 
 
