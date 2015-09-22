@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-system_version = '0.1'
+system_version = '0.2'
 system_name = 'ruter.py'
 
 import sys, datetime, time, urllib2, codecs, unicodedata, re
@@ -33,8 +33,8 @@ TransportationType = {
   'ferry': u'🛥',
   'rail':  u'🚆',
   'tram':  u'🚋',
-  'metro': u'🚇',
-}
+  'metro': u'Ⓣ',
+} #🚇
 stopicon=u"🚏"
 timeicon=u"🕒"
 
@@ -44,6 +44,7 @@ colors = {
 }
 
 apiurl='https://reisapi.ruter.no/stopvisit/getdepartures/'
+#apiurl='http://localhost:8080/'
 schema='{http://schemas.datacontract.org/2004/07/Ruter.Reis.Api.Models}'
 stopsfile='GetStopsRuter.xml'
 xmlroot=None
@@ -68,8 +69,10 @@ def err(string):
 
 """ Read stopsfile, search for stop, return matches as dict """
 def fetch_stops(filename, searchname):
-  searchname = unicodedata.normalize('NFC', unicode(searchname).lower())
+  #searchname = unicodedata.normalize('NFC', unicode(searchname).lower())
+  searchname = searchname.lower()
   result = {}
+  start = time.time()
 
   if verbose:
     print "Parsing stopsfile", filename
@@ -77,6 +80,12 @@ def fetch_stops(filename, searchname):
     root = ET.parse(filename)
   except ET.ParseError as error:
     print "Error loading stopsfile"; print error
+
+  stop = time.time()
+  if verbose:
+    print "File read and parsed in %0.3f ms" % (stop-start)
+
+  start = time.time()
 
   for counter, stop in enumerate(root.findall(schema + 'Stop')):
     stopid = int(stop.find(schema + 'ID').text)
@@ -88,39 +97,45 @@ def fetch_stops(filename, searchname):
       if verbose:
         print "Hit: %d - %s" % (stopid, stopname)
       result[stopname] = stopid
-    if verbose and counter % 500 == 0:
+    if verbose and counter % 1000 == 0:
       print "Reading stops...", counter
       print "%d - %s %s" % (stopid, stopname.lower(), searchname)
 
-  print "Results: ", len(result)
+  stop = time.time()
+  if verbose:
+    print "File searched names in %0.3f ms" % (stop-start)
+
+  if verbose:
+    print "Results: ", len(result)
+    print result
   return result
 
 """ Fetch xml file from url, return string """
 def fetch_api_xml(url):
-  xml, html = None, None
+  html = None
 
   start = time.time()
   try:
     if verbose:
       print "fetch_api_xml", url
-    html = urllib2.urlopen(url)
-    html.addheaders = [('Accept', 'application/xml')] 
-    output = open('ruter.temp','wb')
-    output.write(html.read())
-    output.close()
+
+    request = urllib2.Request(url, headers={"Accept" : 'application/xml'} )
+    html=urllib2.urlopen(request).read()
   except urllib2.HTTPError as error:
+    print url, error
+  except urllib2.BadStatusline as error:
     print url, error
 
   stop = time.time()
   if verbose:
-    print "XML fetched in %0.3f ms" % (stop-start)
+    print "Data fetched in %0.3f ms" % (stop-start)
   return html
 
 def parse_xml(xml, filename):
   if None == xml:
     tree = ET.parse(filename).getroot()
   else: #None == filename
-    tree = ET.parse(xml)
+    tree = ET.fromstring(xml)
   return tree
 
 
@@ -128,12 +143,32 @@ def parse_xml(xml, filename):
 def find_stop_by_name(searchname):
   return None
 
+def convert(str):
+  #attempt to convert string str from iso-8859-1/windows-1252
+  newstr=str
+
+  result = chardet.detect(str)
+  if verbose:
+    print "result"
+    print result,"-",result['encoding']
+
+  #return str.decode(result['encoding']).encode("UTF-8")
+  try:
+    #print "result:",str.decode('iso-8859-1').encode("UTF-8")
+    newstr = str.decode('utf-8').encode("UTF-8")
+  except UnicodeDecodeError as e:
+    #print "Err",e,str
+    newstr = str.decode('iso-8859-1').encode("UTF-8")
+  #except UnicodeEncodeError as e:
+
+  return newstr
 
 
 if __name__ == '__main__':
   stopname=''
   stopid=''
   limitresults=15
+  localxml=None
   args = sys.argv[1:]
 
   if '-v' in args:
@@ -157,22 +192,17 @@ if __name__ == '__main__':
   else:
     stopname = ''.join(args[0:])
 
+
   if verbose:
     print "stopname", stopname
 
   ''' Check if we have number or name '''
-  if stopname.isdigit():
+  stopid = None
+  if not stopname.isdigit():
     if verbose:
-      print "Looking up stopid."
-
-    if localxml:
-      xmlroot = parse_xml(None, localxml)
-    else:
-      xmlroot = parse_xml(fetch_api_xml(apiurl + stopid), None)
-
-  else:
-    ''' Søk og velg stop '''
+      print "Looking up stopname."
     stops = fetch_stops(stopsfile, stopname)
+
     if len(stops) > 10:
       print "%s ga for mange treff, prøv igjen." % stopname
       sys.exit(3)
@@ -186,16 +216,31 @@ if __name__ == '__main__':
       print "Ingen treff på stoppnavn."
       sys.exit(4) #No hits
 
+    stopid = stops.itervalues().next()
+
+  else:
+    if verbose:
+      print "Looking up stopid."
+    stopid = stopname
+
+  xmlroot = None
+  if localxml:
+    xmlroot = parse_xml(None, localxml)
+  else:
+    xmlroot = parse_xml(fetch_api_xml(apiurl + str(stopid)), None)
+
+  ''' Dig out values from xml '''
   for counter, MonitoredStopVisit in enumerate(xmlroot.findall(schema + 'MonitoredStopVisit')):
     outputline=''
     #if verbose:
-      #print "  MonitoredStopVisits:", len(MonitoredStopVisit)
+    #  print "  MonitoredStopVisits:", len(MonitoredStopVisit)
 
     #Extensions = MonitoredStopVisit.find(schema + 'Extensions')
     #deviations = MonitoredStopVisit[0][0] # or MonitoredVehicleJourney
     MonitoredVehicleJourney = \
       MonitoredStopVisit.find(schema + 'MonitoredVehicleJourney')
-    DestinationName = MonitoredVehicleJourney.find(schema + 'DestinationName').text
+    DestinationName = MonitoredVehicleJourney.find(schema + \
+      'DestinationName').text
     DirectionName = MonitoredVehicleJourney.find(schema + 'DirectionName').text
     if DirectionName == None:
       continue
@@ -204,7 +249,8 @@ if __name__ == '__main__':
     VehicleMode = MonitoredVehicleJourney.find(schema + 'VehicleMode')
     MonitoredCall = MonitoredVehicleJourney.find(schema + 'MonitoredCall')
     MonitoredVehicleJourney.find(schema + 'Delay')
-    PublishedLineName = MonitoredVehicleJourney.find(schema + 'PublishedLineName').text
+    PublishedLineName = MonitoredVehicleJourney.find(schema + \
+      'PublishedLineName').text
 
     #print "MonitoredVehicleJourney", MonitoredVehicleJourney.getchildren()
     #print PublishedLineName.text
@@ -212,37 +258,46 @@ if __name__ == '__main__':
     # Fetch and convert time, original 2015-09-03T18:19:00+02:00
     # TODO: currently skipping UTC offset
     AimedDepartureTime = \
-      datetime.datetime.strptime(MonitoredCall.find(schema + 'AimedDepartureTime').text[:19], "%Y-%m-%dT%H:%M:%S")
+      datetime.datetime.strptime(MonitoredCall.find(schema + \
+      'AimedDepartureTime').text[:19], "%Y-%m-%dT%H:%M:%S")
 
     outputline += "%s %s %s    " \
-      % (PublishedLineName.rjust(3), DestinationName.ljust(20), DirectionName)
+      % (PublishedLineName.rjust(3), DestinationName.ljust(25), DirectionName)
 
     if AimedDepartureTime.day == datetime.date.today().day:
       outputline += \
-      "%s " % str(AimedDepartureTime.time()).ljust(15)
+      "%s " % str(AimedDepartureTime.time()).ljust(17)
     else:
       outputline += \
-      "%s" % str(AimedDepartureTime).ljust(15)
+      "%s" % str(AimedDepartureTime).ljust(17)
 
     outputline += TransportationType[VehicleMode.text]
 
     if 'PT0S' != str(Delay.text):
-      outputline += '    [%s]' % Delay.text
+      outputline += '    ' + Delay.text.ljust(10)
 
     output.append([DirectionName, outputline])
     if DirectionName not in directions:
       directions[DirectionName] = 0
 
-  # Print main output
-  print "Linje/Destinasjon        Spor Tid             Type Forsinkelse"
+  if verbose:
+    print output
+
+  output.sort()
+  ''' Print main output '''
+  print "Linje/Destinasjon             Spor Tid               Type Forsinkelse"
   for counter, outarray in enumerate(output):
     #print outarray
     if limitresults > directions[outarray[0]]:
       print outarray[1]
       directions[outarray[0]]+=1
 
-    #if counter >= (limitresults-1):
-      #break
+
+
+
+
+
+
 
   '''
   print "children:"
