@@ -51,14 +51,18 @@ xmlroot=None
 verbose=False
 output=[]
 directions={} # Dict of directions at this stop
+line_number=None
 
 def usage():
   print('Bruk: %s [-a] [-l] [-n] [-v] <stasjonsnavn|stasjonsid>' % sys.argv[0])
   print('''
   -a       ASCII for ikke å bruke Unicode symboler/ikoner
-  -l       Bruk lokal fil ruter.temp som xml-kilde (kun for utvikling)
-  -n       Begrens treff pr. spor, tilbakefall er 5.
-  -v       verbose for utfyllende informasjon
+  -l       Begrens treff til kun linje-nummer.
+  -n       Begrens treff pr. platform, tilbakefall er 5.
+  -p       Begrens treff til platform-nummer.
+  -v       Verbose for utfyllende informasjon
+
+  -t       Bruk lokal fil ruter.temp som xml-kilde (kun for utvikling)
   ''')
   print(system_name, 'version', system_version)
   sys.exit(1)
@@ -68,9 +72,9 @@ def err(string):
   sys.exit(1)
 
 """ Read stopsfile, search for stop, return matches as dict """
-def fetch_stops(filename, searchname):
-  #searchname = unicodedata.normalize('NFC', unicode(searchname).lower())
-  searchname = searchname.lower()
+def fetch_stops(filename, name_needle):
+  #name_needle = unicodedata.normalize('NFC', unicode(name_needle).lower())
+  name_needle = name_needle.lower()
   result = {}
   start = time.time()
 
@@ -87,19 +91,32 @@ def fetch_stops(filename, searchname):
 
   start = time.time()
 
+  # Loop through all stop names, searching for name_needle
   for counter, stop in enumerate(root.findall(schema + 'Stop')):
+    # Current stopid and stopname
     stopid = int(stop.find(schema + 'ID').text)
-    stopname = \
-      unicodedata.normalize('NFC', str(stop.find(schema + 'Name').text.lower().replace(' ', '').replace('(', '').replace(')', '').replace('-','')))
+    stopname = stop.find(schema + 'Name').text.lower()
+    #stopname = \
+    #  unicodedata.normalize('NFC', str(stop.find(schema + 'Name').text.lower().replace(' ', '').replace('(', '').replace(')', '').replace('-','')))
+
+    # Attempt 1:1 match
+    if name_needle == stopname:
+      if verbose:
+        print("Direct hit: %d - %s" % (stopid, stopname))
+      result[stopname] = stopid
+      break
+
     if re.match(
-      searchname.replace(' ', '').replace('(', '').replace(')', '').replace('-','') + '*',
+      name_needle.replace(' ', '').replace('(', '').replace(')', '').replace('-','') + '*',
       stopname):
       if verbose:
         print("Hit: %d - %s" % (stopid, stopname))
       result[stopname] = stopid
+
+    # Print progress every 1k stops
     if verbose and counter % 1000 == 0:
       print("Reading stops...", counter)
-      print("%d - %s %s" % (stopid, stopname.lower(), searchname))
+      print("%d - %s %s" % (stopid, stopname.lower(), name_needle))
 
   stop = time.time()
   if verbose:
@@ -140,7 +157,7 @@ def parse_xml(xml, filename):
 
 
 ''' Read stopfile and return name '''
-def find_stop_by_name(searchname):
+def find_stop_by_name(name_needle):
   return None
 
 def convert(str):
@@ -178,12 +195,20 @@ if __name__ == '__main__':
 
   if '-n' in args:
     limitresults = args[ args.index('-n')+1 ]
+    args.pop(args.index('-n')+1)
     args.pop(args.index('-n'))
     if verbose:
       print("limitresults", limitresults)
       print(args, stopname)
 
   if '-l' in args:
+    line_number = args[ args.index('-l')+1 ]
+    args.pop(args.index('-l')+1)
+    args.pop(args.index('-l'))
+    if verbose:
+      print("line_number", line_number)
+
+  if '-d' in args:
     localxml = 'ruter.temp'
     args.pop(args.index('-l'))
 
@@ -191,7 +216,6 @@ if __name__ == '__main__':
     usage()
   else:
     stopname = ''.join(args[0:])
-
 
   if verbose:
     print("stopname", stopname)
@@ -208,7 +232,6 @@ if __name__ == '__main__':
       sys.exit(3)
     elif len(stops) > 1:
       print("Flere treff, angi mer nøyaktig:")
-      print(stops)
       for key in stops:
         print("[%d] %s" % (stops[key], key))
       sys.exit(3) #Too many hits
@@ -216,7 +239,10 @@ if __name__ == '__main__':
       print("Ingen treff på stoppnavn.")
       sys.exit(4) #No hits
 
-    stopid = next(iter(stops.values()))
+    selected_stop = list(stops.keys())[0]
+    stopid = stops[selected_stop]
+    print("Avganger fra %s, oppdatert %s" \
+      % (selected_stop, datetime.datetime.now().strftime("%H:%M")))
 
   else:
     if verbose:
@@ -232,8 +258,6 @@ if __name__ == '__main__':
   ''' Dig out values from xml '''
   for counter, MonitoredStopVisit in enumerate(xmlroot.findall(schema + 'MonitoredStopVisit')):
     outputline=''
-    #if verbose:
-    #  print "  MonitoredStopVisits:", len(MonitoredStopVisit)
 
     #Extensions = MonitoredStopVisit.find(schema + 'Extensions')
     #deviations = MonitoredStopVisit[0][0] # or MonitoredVehicleJourney
@@ -261,12 +285,16 @@ if __name__ == '__main__':
       datetime.datetime.strptime(MonitoredCall.find(schema + \
       'AimedDepartureTime').text[:19], "%Y-%m-%dT%H:%M:%S")
 
-    outputline += "%s %s %s    " \
+    if line_number:
+      if str(line_number) != PublishedLineName:
+        continue
+
+    outputline += "%s %s %s        " \
       % (PublishedLineName.rjust(3), DestinationName.ljust(25), DirectionName)
 
     if AimedDepartureTime.day == datetime.date.today().day:
       outputline += \
-      "%s " % str(AimedDepartureTime.time()).ljust(17)
+      "%s " % str(AimedDepartureTime.time()).ljust(13)
     else:
       outputline += \
       "%s" % str(AimedDepartureTime).ljust(17)
@@ -285,7 +313,7 @@ if __name__ == '__main__':
 
   output.sort()
   ''' Print main output '''
-  print("Linje/Destinasjon             Spor Tid               Type Forsinkelse")
+  print("Linje/Destinasjon             Platform Tid           Type Forsinkelse")
   for counter, outarray in enumerate(output):
     #print outarray
     if limitresults > directions[outarray[0]]:

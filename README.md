@@ -1,34 +1,39 @@
-A python client for ruter.no, made using the API at http://labs.ruter.no/
+A python3 client for ruter.no, made using the API at http://labs.ruter.no/
 
 GNU AFFERO GENERAL PUBLIC LICENSE
 
-Example run of beta:
+Example run of beta 0.3:
+
+
+Direct hit:
 
 ```
-
 $ ./ruter.py lijordet
+Avganger fra lijordet, oppdatert 22:15
+Linje/Destinasjon             Platform Tid           Type Forsinkelse
+  5 Vestli                    1        22:19:59      Ⓣ
+  5 Vestli                    1        22:34:59      Ⓣ
+  5 Vestli                    1        22:49:59      Ⓣ
+```
+
+Long name:
+
+```
+./ruter.py "borgen (i sørkedalsveien)"
+Avganger fra borgen (i sørkedalsveien), oppdatert 22:15
+Linje/Destinasjon             Platform Tid           Type Forsinkelse
+ 45 Majorstuen                1        22:18:00      🚌
+ 45 Majorstuen                1        22:48:00      🚌
+ 45 Voksen skog               2        22:34:00      🚌
+```
+
+Several hits:
+
+```
+$ ./ruter.py majorstuen
 Flere treff, angi mer nøyaktig:
-{u'lijordetrideveieninadderudv': 2195136, u'lijordet': 2190080}
-[2195136] lijordetrideveieninadderudv
-[2190080] lijordet
-
-$ ./ruter.py 2190080
-Linje/Destinasjon             Spor Tid               Type Forsinkelse
-  5 Vestli                    1    15:34:59          Ⓣ
-  5 Vestli                    1    15:44:16          Ⓣ
-  5 Vestli                    1    15:49:59          Ⓣ
-  5 Vestli                    1    15:59:16          Ⓣ
-  5 Vestli                    1    16:04:59          Ⓣ
-  5 Vestli                    1    16:14:16          Ⓣ
-  5 Vestli                    1    16:19:59          Ⓣ
-  5 Vestli                    1    16:29:16          Ⓣ
-  5 Østerås                   2    15:37:59          Ⓣ    PT101S
-  5 Østerås                   2    15:43:58          Ⓣ    PT16S
-  5 Østerås                   2    15:52:59          Ⓣ    PT90S
-  5 Østerås                   2    15:58:58          Ⓣ
-  5 Østerås                   2    16:07:59          Ⓣ
-  5 Østerås                   2    16:13:58          Ⓣ    PT80S
-  5 Østerås                   2    16:22:59          Ⓣ
-  5 Østerås                   2    16:28:58          Ⓣ
-
+[3010203] majorstuen (i valkyriegata)
+[3010200] majorstuen [t-bane]
+[3010201] majorstuen (i kirkeveien)
+[3010202] majorstuen (i sørkedalsveien)
 ```
