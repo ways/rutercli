@@ -37,3 +37,11 @@ Flere treff, angi mer nøyaktig:
 [3010201] majorstuen (i kirkeveien)
 [3010202] majorstuen (i sørkedalsveien)
 ```
+
+TODO:
+* One-line interface for status bar
+* limit by platform
+* Decode delay data
+* Check if any vehicles support estimated load data yet
+* None-unicode mode
+* Set up as finger service?
