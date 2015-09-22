@@ -1,6 +1,6 @@
 A python client for ruter.no, made using the API at http://labs.ruter.no/
 
-GPLv3
+GNU AFFERO GENERAL PUBLIC LICENSE
 
 Example run of beta:
 
