@@ -49,22 +49,18 @@ schema='{http://schemas.datacontract.org/2004/07/Ruter.Reis.Api.Models}'
 stopsfile='GetStopsRuter.xml'
 xmlroot=None
 verbose=False
-output=[]
-directions={} # Dict of directions at this stop
-line_number=None
-platform_number=None
 
 def usage():
   print('Bruk: %s [-a] [-l] [-n] [-v] <stasjonsnavn|stasjonsid>' % sys.argv[0])
   print('''
-  -a       ASCII for ikke å bruke Unicode symboler/ikoner
   -l       Begrens treff til kun linje-nummer.
   -n       Begrens treff pr. platform, tilbakefall er 5.
   -p       Begrens treff til platform-nummer.
   -v       Verbose for utfyllende informasjon
-
-  -t       Bruk lokal fil ruter.temp som xml-kilde (kun for utvikling)
   ''')
+  #-a       ASCII for ikke å bruke Unicode symboler/ikoner
+  #-t       Bruk lokal fil ruter.temp som xml-kilde (kun for utvikling)
+
   print(system_name, 'version', system_version)
   sys.exit(1)
 
@@ -188,6 +184,11 @@ if __name__ == '__main__':
   stopid=''
   limitresults=15
   localxml=None
+  output=[]
+  directions={} # Dict of directions at this stop
+  line_number=None
+  platform_number=None
+
   args = sys.argv[1:]
 
   if '-v' in args:
@@ -309,7 +310,8 @@ if __name__ == '__main__':
 
     if AimedDepartureTime.day == datetime.date.today().day:
       outputline += \
-      "%s " % str(AimedDepartureTime.time()).ljust(13)
+      "%s " % str(AimedDepartureTime.strftime("%H:%M")).ljust(10)
+      #"%s " % str(AimedDepartureTime.time()).ljust(13)
     else:
       outputline += \
       "%s" % str(AimedDepartureTime).ljust(17)
@@ -328,7 +330,7 @@ if __name__ == '__main__':
 
   output.sort()
   ''' Print main output '''
-  print("Linje/Destinasjon             Platform Tid           Type Forsinkelse")
+  print("Linje/Destinasjon             Platform Tid        Type Forsinkelse")
   for counter, outarray in enumerate(output):
     #print outarray
     if limitresults > directions[outarray[0]]:

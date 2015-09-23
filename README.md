@@ -38,10 +38,28 @@ Flere treff, angi mer nøyaktig:
 [3010202] majorstuen (i sørkedalsveien)
 ```
 
+Refined search:
+
+```
+./ruter.py vøyenbrua -l 28 -p 2
+Avganger fra vøyenbrua, oppdatert 15:45
+Linje/Destinasjon             Platform Tid           Type Forsinkelse
+ 28 Fornebu                   2        15:49:00      🚌    PT70S
+ 28 Fornebu                   2        15:59:00      🚌
+ 28 Fornebu                   2        16:09:00      🚌
+ 28 Fornebu                   2        16:19:00      🚌
+ 28 Fornebu                   2        16:29:00      🚌
+ 28 Fornebu                   2        16:39:00      🚌
+```
+
 TODO:
 * One-line interface for status bar
-* limit by platform
 * Decode delay data
 * Check if any vehicles support estimated load data yet
 * None-unicode mode
 * Set up as finger service?
+* Move everything to funcitons, split core functions to a library.
+
+One-liner sketches:
+./ruter.py vøyenbrua -l 28 -p 2
+🚌 28 Fornebu 15:49 (1 min)  15:59 (11 min.)  16:09 (21 min.)  16:19
