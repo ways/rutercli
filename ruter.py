@@ -68,7 +68,6 @@ def err(string):
 
 """ Read stopsfile, search for stop, return matches as dict """
 def fetch_stops(filename, name_needle):
-  #name_needle = unicodedata.normalize('NFC', unicode(name_needle).lower())
   name_needle = name_needle.lower()
   result = {}
   start = time.time()
@@ -91,8 +90,6 @@ def fetch_stops(filename, name_needle):
     # Current stopid and stopname
     stopid = int(stop.find(schema + 'ID').text)
     stopname = stop.find(schema + 'Name').text.lower()
-    #stopname = \
-    #  unicodedata.normalize('NFC', str(stop.find(schema + 'Name').text.lower().replace(' ', '').replace('(', '').replace(')', '').replace('-','')))
 
     # Attempt 1:1 match
     if name_needle == stopname:
@@ -153,26 +150,6 @@ def parse_xml(xml, filename):
 ''' Read stopfile and return name '''
 def find_stop_by_name(name_needle):
   return None
-
-def convert(str):
-  #attempt to convert string str from iso-8859-1/windows-1252
-  newstr=str
-
-  result = chardet.detect(str)
-  if verbose:
-    print("result")
-    print(result,"-",result['encoding'])
-
-  #return str.decode(result['encoding']).encode("UTF-8")
-  try:
-    #print "result:",str.decode('iso-8859-1').encode("UTF-8")
-    newstr = str.decode('utf-8').encode("UTF-8")
-  except UnicodeDecodeError as e:
-    #print "Err",e,str
-    newstr = str.decode('iso-8859-1').encode("UTF-8")
-  #except UnicodeEncodeError as e:
-
-  return newstr
 
 
 if __name__ == '__main__':
