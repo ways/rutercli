@@ -19,10 +19,8 @@
 system_version = '0.3'
 system_name = 'ruter.py'
 
-import sys, datetime, time, urllib.request, urllib.error, urllib.parse, codecs, unicodedata, re
+import sys, datetime, time, urllib.request, urllib.error, urllib.parse, unicodedata, re
 import xml.etree.ElementTree as ET
-
-ttycode=sys.stdin.encoding
 
 # icons http://www.fileformat.info/info/unicode/block/transport_and_map_symbols/list.htm
 
@@ -100,7 +98,7 @@ def fetch_stops(filename, name_needle):
     if name_needle == stopname:
       if verbose:
         print("Direct hit: %d - %s" % (stopid, stopname))
-        result.clear()
+      result.clear()
       result[stopname] = stopid
       break
 
@@ -135,10 +133,8 @@ def fetch_api_xml(url):
       print("fetch_api_xml", url)
 
     request = urllib.request.Request(url, headers={"Accept" : 'application/xml'} )
-    html=urllib.request.urlopen(request).read()
+    html=urllib.request.urlopen(request, timeout=10).read()
   except urllib.error.HTTPError as error:
-    print(url, error)
-  except urllib2.BadStatusline as error:
     print(url, error)
 
   stop = time.time()
