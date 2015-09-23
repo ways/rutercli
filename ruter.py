@@ -51,11 +51,16 @@ verbose=False
 def usage():
   print('Bruk: %s [-a] [-l] [-n] [-v] <stasjonsnavn|stasjonsid>' % sys.argv[0])
   print('''
+  -h       Vis denne hjelpen.
   -l       Begrens treff til kun linje-nummer.
   -n       Begrens treff pr. platform, tilbakefall er 5.
   -p       Begrens treff til platform-nummer.
   -v       Verbose for utfyllende informasjon
   ''')
+
+  for icon in TransportationType:
+    print (icon, TransportationType[icon])
+
   #-a       ASCII for ikke å bruke Unicode symboler/ikoner
   #-t       Bruk lokal fil ruter.temp som xml-kilde (kun for utvikling)
 
@@ -163,6 +168,9 @@ if __name__ == '__main__':
   platform_number=None
 
   args = sys.argv[1:]
+
+  if '-h' in args:
+    usage()
 
   if '-v' in args:
     verbose = True
