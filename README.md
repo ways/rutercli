@@ -53,6 +53,7 @@ Linje/Destinasjon             Platform Tid           Type Forsinkelse
 ```
 
 TODO:
+* Auto download stops database on demand.
 * One-line interface for status bar
 * Decode delay data
 * Check if any vehicles support estimated load data yet
