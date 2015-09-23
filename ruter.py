@@ -52,6 +52,7 @@ verbose=False
 output=[]
 directions={} # Dict of directions at this stop
 line_number=None
+platform_number=None
 
 def usage():
   print('Bruk: %s [-a] [-l] [-n] [-v] <stasjonsnavn|stasjonsid>' % sys.argv[0])
@@ -103,6 +104,7 @@ def fetch_stops(filename, name_needle):
     if name_needle == stopname:
       if verbose:
         print("Direct hit: %d - %s" % (stopid, stopname))
+        result.clear()
       result[stopname] = stopid
       break
 
@@ -208,6 +210,13 @@ if __name__ == '__main__':
     if verbose:
       print("line_number", line_number)
 
+  if '-p' in args:
+    platform_number = args[ args.index('-p')+1 ]
+    args.pop(args.index('-p')+1)
+    args.pop(args.index('-p'))
+    if verbose:
+      print("platform_number", platform_number)
+
   if '-d' in args:
     localxml = 'ruter.temp'
     args.pop(args.index('-l'))
@@ -285,8 +294,14 @@ if __name__ == '__main__':
       datetime.datetime.strptime(MonitoredCall.find(schema + \
       'AimedDepartureTime').text[:19], "%Y-%m-%dT%H:%M:%S")
 
+    # Limit results by line_number
     if line_number:
       if str(line_number) != PublishedLineName:
+        continue
+
+    # Limit results by platform_number
+    if platform_number:
+      if str(platform_number) != DirectionName:
         continue
 
     outputline += "%s %s %s        " \
