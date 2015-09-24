@@ -19,25 +19,21 @@
 system_version = '0.4'
 system_name = 'ruter.py'
 
-import sys, datetime, time, urllib.request, urllib.error, urllib.parse, unicodedata, re, os.path
+import sys, datetime, time, urllib.request, urllib.error, urllib.parse, re, os.path
 import xml.etree.ElementTree as ET
 
-# icons http://www.fileformat.info/info/unicode/block/transport_and_map_symbols/list.htm
-
-# TransportationType (in SOAP) 	Num value (in JSON response)
-#bus 	0 #ferry 	1 #rail 	2 #tram 	3 #metro 	4
 TransportationType = {
   'bus':   '🚌',
-  'ferry': '🛥',
+  'ferry': '⛴',
   'rail':  '🚆',
   'tram':  '🚋',
-  'metro': 'Ⓣ',
-} #🚇
+  'metro': 'Ⓣ', #🚇
+}
 stopicon="🚏"
 timeicon="🕒"
 
 # html to terminal safe colors
-colors = {
+color_codes = {
   'F07800': 'orange',
 }
 
@@ -59,6 +55,9 @@ def usage():
 
   for icon in TransportationType:
     print (icon, TransportationType[icon])
+
+  for color_code in color_codes:
+    print (color_code, color_codes[color_code])
 
   #-a       ASCII for ikke å bruke Unicode symboler/ikoner
   #-t       Bruk lokal fil ruter.temp som xml-kilde (kun for utvikling)
@@ -168,13 +167,13 @@ def find_stop_by_name(name_needle):
 
 if __name__ == '__main__':
   stopname=''
-  stopid=''
-  limitresults=15
+  limitresults=20
   localxml=None
   output=[]
   directions={} # Dict of directions at this stop
   line_number=None
   platform_number=None
+  stopid = None
 
   args = sys.argv[1:]
 
@@ -187,7 +186,7 @@ if __name__ == '__main__':
     print(args)
 
   if '-n' in args:
-    limitresults = args[ args.index('-n')+1 ]
+    limitresults = int(args[ args.index('-n')+1 ])
     args.pop(args.index('-n')+1)
     args.pop(args.index('-n'))
     if verbose:
@@ -221,7 +220,6 @@ if __name__ == '__main__':
     print("stopname", stopname)
 
   ''' Check if we have number or name '''
-  stopid = None
   if not stopname.isdigit():
     if verbose:
       print("Looking up stopname.")
@@ -256,20 +254,27 @@ if __name__ == '__main__':
     xmlroot = parse_xml(fetch_api_xml(apiurl + str(stopid)), None)
 
   ''' Dig out values from xml '''
+  if verbose:
+    print ("Found %d MonitoredStopVisits" % len(xmlroot.findall(schema + 'MonitoredStopVisit')))
+
   for counter, MonitoredStopVisit in enumerate(xmlroot.findall(schema + 'MonitoredStopVisit')):
     outputline=''
 
-    #Extensions = MonitoredStopVisit.find(schema + 'Extensions')
-    #deviations = MonitoredStopVisit[0][0] # or MonitoredVehicleJourney
     MonitoredVehicleJourney = \
       MonitoredStopVisit.find(schema + 'MonitoredVehicleJourney')
     DestinationName = MonitoredVehicleJourney.find(schema + \
       'DestinationName').text
     DirectionName = MonitoredVehicleJourney.find(schema + 'DirectionName').text
     if DirectionName == None:
-      continue
+      if verbose:
+        print ("No DirectionName for %s" % MonitoredVehicleJourney.find(schema + \
+          'DestinationName').text)
+        #print (MonitoredVehicleJourney.getchildren())
+      DirectionName = '999'
 
-    Delay = MonitoredVehicleJourney.find(schema + 'Delay')
+    Delay = MonitoredVehicleJourney.find(schema + 'Delay').text
+    if not Delay:
+      Delay = ''
     VehicleMode = MonitoredVehicleJourney.find(schema + 'VehicleMode')
     MonitoredCall = MonitoredVehicleJourney.find(schema + 'MonitoredCall')
     MonitoredVehicleJourney.find(schema + 'Delay')
@@ -277,13 +282,15 @@ if __name__ == '__main__':
       'PublishedLineName').text
 
     #print "MonitoredVehicleJourney", MonitoredVehicleJourney.getchildren()
-    #print PublishedLineName.text
 
     # Fetch and convert time, original 2015-09-03T18:19:00+02:00
     # TODO: currently skipping UTC offset
     AimedDepartureTime = \
       datetime.datetime.strptime(MonitoredCall.find(schema + \
       'AimedDepartureTime').text[:19], "%Y-%m-%dT%H:%M:%S")
+
+    InCongestion = MonitoredVehicleJourney.find(schema + 'InCongestion').text
+    #print (InCongestion)
 
     # Limit results by line_number
     if line_number:
@@ -300,15 +307,16 @@ if __name__ == '__main__':
 
     if AimedDepartureTime.day == datetime.date.today().day:
       outputline += \
-      "%s " % str(AimedDepartureTime.strftime("%H:%M")).ljust(10)
+      "%s " % str(AimedDepartureTime.strftime("%H:%M"))
+      outputline += 'kø'.ljust(8) if 'true' == InCongestion else ''.ljust(10)
     else:
       outputline += \
       "%s" % str(AimedDepartureTime).ljust(17)
 
     outputline += TransportationType[VehicleMode.text]
 
-    if 'PT0S' != str(Delay.text):
-      outputline += '    ' + Delay.text.ljust(10)
+    if 'PT0S' != Delay:
+      outputline += '    ' + Delay.ljust(10)
 
     output.append([DirectionName, outputline])
     if DirectionName not in directions:

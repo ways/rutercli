@@ -52,6 +52,9 @@ Linje/Destinasjon             Platform Tid           Type Forsinkelse
  28 Fornebu                   2        16:39:00      🚌
 ```
 
+BUG:
+* Handle vehicles without platform set.
+
 TODO:
 * Colors for lines
 * Show deviations
