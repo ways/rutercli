@@ -2,7 +2,7 @@ A python3 client for ruter.no, made using the API at http://labs.ruter.no/
 
 GNU AFFERO GENERAL PUBLIC LICENSE
 
-Example run of beta 0.3:
+Example run of beta 0.4:
 
 
 Direct hit:
@@ -53,14 +53,15 @@ Linje/Destinasjon             Platform Tid           Type Forsinkelse
 ```
 
 TODO:
-* Auto download stops database on demand.
+* Colors for lines
+* Show deviations
 * One-line interface for status bar
 * Decode delay data
 * Check if any vehicles support estimated load data yet
 * None-unicode mode
-* Set up as finger service?
+* Set up as finger/web service?
 * Move everything to funcitons, split core functions to a library.
 
 One-liner sketches:
 ./ruter.py vøyenbrua -l 28 -p 2
-🚌 28 Fornebu 15:49 (1 min)  15:59 (11 min.)  16:09 (21 min.)  16:19
+🚌 28 Fornebu fra vøyenbrua 15:49 (1 min)  15:59 (Kø, 11 min)  16:09 (21 min.)

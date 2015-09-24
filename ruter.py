@@ -16,10 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-system_version = '0.3'
+system_version = '0.4'
 system_name = 'ruter.py'
 
-import sys, datetime, time, urllib.request, urllib.error, urllib.parse, unicodedata, re
+import sys, datetime, time, urllib.request, urllib.error, urllib.parse, unicodedata, re, os.path
 import xml.etree.ElementTree as ET
 
 # icons http://www.fileformat.info/info/unicode/block/transport_and_map_symbols/list.htm
@@ -42,10 +42,9 @@ colors = {
 }
 
 apiurl='https://reisapi.ruter.no/stopvisit/getdepartures/'
-#apiurl='http://localhost:8080/'
 schema='{http://schemas.datacontract.org/2004/07/Ruter.Reis.Api.Models}'
 stopsfile='GetStopsRuter.xml'
-xmlroot=None
+stopsurl='http://reisapi.ruter.no/Place/GetStopsRuter'
 verbose=False
 
 def usage():
@@ -71,14 +70,24 @@ def err(string):
   sys.stdout.write('%s: Error: %s\n' % (sys.argv[0], string))
   sys.exit(1)
 
-""" Read stopsfile, search for stop, return matches as dict """
+""" Check if stopsfile exists, download if necessary.
+    Read stopsfile, search for stop, return matches as dict """
 def fetch_stops(filename, name_needle):
   name_needle = name_needle.lower()
   result = {}
   start = time.time()
 
+  if not os.path.isfile(filename):
+    print("Oversikt over stop mangler (%s), laster ned... " % filename, end="")
+    request = urllib.request.Request(stopsurl, headers={"Accept" : 'application/xml'})
+    with urllib.request.urlopen(request, timeout=10) as response, open(filename, 'wb') as out_file:
+      data = response.read() # a `bytes` object
+      out_file.write(data)
+    print("ferdig.")
+
   if verbose:
     print("Parsing stopsfile", filename)
+
   try:
     root = ET.parse(filename)
   except ET.ParseError as error:
@@ -292,7 +301,6 @@ if __name__ == '__main__':
     if AimedDepartureTime.day == datetime.date.today().day:
       outputline += \
       "%s " % str(AimedDepartureTime.strftime("%H:%M")).ljust(10)
-      #"%s " % str(AimedDepartureTime.time()).ljust(13)
     else:
       outputline += \
       "%s" % str(AimedDepartureTime).ljust(17)
@@ -313,63 +321,8 @@ if __name__ == '__main__':
   ''' Print main output '''
   print("Linje/Destinasjon             Platform Tid        Type Forsinkelse")
   for counter, outarray in enumerate(output):
-    #print outarray
     if limitresults > directions[outarray[0]]:
       print(outarray[1])
       directions[outarray[0]]+=1
 
-
-
-
-
-
-
-
-  '''
-  print "children:"
-  print "MonitoredStopVisit", MonitoredStopVisit.getchildren()
-  print "Extensions", Extensions.getchildren()
-  print "MonitoredVehicleJourney", MonitoredVehicleJourney.getchildren()
-  #for mvj in MonitoredStopVisit.getchildren():
-  #  print mvj.text
-  '''
-  #break
-
-'''
-MonitoredStopVisit
-None
-None
-2190090
-2015-09-01T10:32:12.833+02:00
-
-
-Extensions
-None
-false
-F07800
-None
-
-MonitoredVehicleJourney
-504:5H01H02
-PT0S
-0001-01-01T00:00:00
-Vestli
-3011730
-1
-1
-None
-false
-5
-true
-None
-me
-0001-01-01T00:00:00
-ØSÅ2
-2190090
-5
-None
-None
-34856
-metro
-176
-'''
+  sys.exit(0)
