@@ -225,7 +225,7 @@ if __name__ == '__main__':
       print("Looking up stopname.")
     stops = fetch_stops(stopsfile, stopname)
 
-    if len(stops) > 10:
+    if len(stops) > 30:
       print("%s ga for mange treff, prøv igjen." % stopname)
       sys.exit(3)
     elif len(stops) > 1:
@@ -264,13 +264,6 @@ if __name__ == '__main__':
       MonitoredStopVisit.find(schema + 'MonitoredVehicleJourney')
     DestinationName = MonitoredVehicleJourney.find(schema + \
       'DestinationName').text
-    DirectionName = MonitoredVehicleJourney.find(schema + 'DirectionName').text
-    if DirectionName == None:
-      if verbose:
-        print ("No DirectionName for %s" % MonitoredVehicleJourney.find(schema + \
-          'DestinationName').text)
-        #print (MonitoredVehicleJourney.getchildren())
-      DirectionName = '999'
 
     Delay = MonitoredVehicleJourney.find(schema + 'Delay').text
     if not Delay:
@@ -280,6 +273,15 @@ if __name__ == '__main__':
     MonitoredVehicleJourney.find(schema + 'Delay')
     PublishedLineName = MonitoredVehicleJourney.find(schema + \
       'PublishedLineName').text
+
+    DeparturePlatformName = MonitoredCall.find(schema + 'DeparturePlatformName').text
+    DirectionName = DeparturePlatformName.split()[0]
+    if DirectionName == None:
+      if verbose:
+        print ("No DirectionName for %s" % MonitoredVehicleJourney.find(schema + \
+          'DestinationName').text)
+        #print (MonitoredVehicleJourney.getchildren())
+      DirectionName = '999'
 
     #print "MonitoredVehicleJourney", MonitoredVehicleJourney.getchildren()
 
