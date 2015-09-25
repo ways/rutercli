@@ -275,13 +275,6 @@ if __name__ == '__main__':
       'PublishedLineName').text
 
     DeparturePlatformName = MonitoredCall.find(schema + 'DeparturePlatformName').text
-    DirectionName = DeparturePlatformName.split()[0]
-    if DirectionName == None:
-      if verbose:
-        print ("No DirectionName for %s" % MonitoredVehicleJourney.find(schema + \
-          'DestinationName').text)
-        #print (MonitoredVehicleJourney.getchildren())
-      DirectionName = '999'
 
     #print "MonitoredVehicleJourney", MonitoredVehicleJourney.getchildren()
 
@@ -301,35 +294,38 @@ if __name__ == '__main__':
 
     # Limit results by platform_number
     if platform_number:
-      if str(platform_number) != DirectionName:
+      if str(platform_number) != DeparturePlatformName:
         continue
 
-    outputline += "%s %s %s        " \
-      % (PublishedLineName.rjust(3), DestinationName.ljust(25), DirectionName)
+    # Assemble output
+    # Icon for type of transportation
+    outputline += TransportationType[VehicleMode.text]
+
+    # Line number, name, platform
+    outputline += "%s %s %s " \
+      % (PublishedLineName.rjust(3), DestinationName.ljust(24), '{:<19.19}'.format(DeparturePlatformName))
 
     if AimedDepartureTime.day == datetime.date.today().day:
       outputline += \
-      "%s " % str(AimedDepartureTime.strftime("%H:%M"))
-      outputline += 'kø'.ljust(8) if 'true' == InCongestion else ''.ljust(10)
+      "%s" % str(AimedDepartureTime.strftime("%H:%M"))
+      outputline += 'kø' if 'true' == InCongestion else '  '
     else:
       outputline += \
       "%s" % str(AimedDepartureTime).ljust(17)
 
-    outputline += TransportationType[VehicleMode.text]
-
     if 'PT0S' != Delay:
-      outputline += '    ' + Delay.ljust(10)
+      outputline += ' ' + Delay.ljust(10)
 
-    output.append([DirectionName, outputline])
-    if DirectionName not in directions:
-      directions[DirectionName] = 0
+    output.append([DeparturePlatformName, outputline])
+    if DeparturePlatformName not in directions:
+      directions[DeparturePlatformName] = 0
 
   if verbose:
     print(output)
 
   output.sort()
   ''' Print main output '''
-  print("Linje/Destinasjon             Platform Tid        Type Forsinkelse")
+  print("Linje/Destinasjon             Platform            Tid    Forsinkelse")
   for counter, outarray in enumerate(output):
     if limitresults > directions[outarray[0]]:
       print(outarray[1])
