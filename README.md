@@ -52,9 +52,6 @@ Linje/Destinasjon             Platform Tid           Type Forsinkelse
  28 Fornebu                   2        16:39:00      🚌
 ```
 
-BUG:
-* Handle vehicles without platform set.
-
 TODO:
 * Colors for lines
 * Show deviations
@@ -63,7 +60,7 @@ TODO:
 * Check if any vehicles support estimated load data yet
 * None-unicode mode
 * Set up as finger/web service?
-* Move everything to funcitons, split core functions to a library.
+* Split core functions to a library.
 
 One-liner sketches:
 ./ruter.py vøyenbrua -l 28 -p 2

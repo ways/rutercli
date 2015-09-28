@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-system_version = '0.4'
+system_version = '0.5'
 system_name = 'ruter.py'
 
 import sys, datetime, time, urllib.request, urllib.error, re, os.path
@@ -33,6 +33,7 @@ stopicon="🚏"
 timeicon="🕒"
 
 # html to terminal safe colors
+#TODO: colors!
 color_codes = {
   'F07800': 'orange',
 }
