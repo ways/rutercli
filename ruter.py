@@ -147,6 +147,9 @@ def fetch_api_xml(url):
     html=urllib.request.urlopen(request, timeout=10).read()
   except urllib.error.HTTPError as error:
     print(url, error)
+  except:
+    print("Fikk ikke tak i ruter.no, prøv igjen.")
+    sys.exit(1)
 
   stop = time.time()
   if verbose:
@@ -220,7 +223,7 @@ def get_departures (stopid, localxml):
       'DestinationName').text
 
     departure['Delay'] = MonitoredVehicleJourney.find(schema + 'Delay').text
-    VehicleMode = MonitoredVehicleJourney.find(schema + 'VehicleMode')
+    departure['VehicleMode'] = MonitoredVehicleJourney.find(schema + 'VehicleMode').text
     MonitoredCall = MonitoredVehicleJourney.find(schema + 'MonitoredCall')
     #MonitoredVehicleJourney.find(schema + 'Delay')
     departure['PublishedLineName'] = MonitoredVehicleJourney.find(schema + \
@@ -240,14 +243,15 @@ def get_departures (stopid, localxml):
 
     departures.append(departure)
 
-  return departures
+  # Sort departures by platform name
+  return sorted(departures, key=lambda k: k['DeparturePlatformName'])
 
 
 ''' Print main output '''
 def print_departures(departures, platform_number, limitresults, line_number):
   if verbose:
     print(departures[0])
-  output=''
+  output=[]
   directions={}
 
   print("Linje/Destinasjon             Platform            Tid    Forsinkelse")
@@ -269,33 +273,33 @@ def print_departures(departures, platform_number, limitresults, line_number):
     if departure['DeparturePlatformName'] not in directions.keys():
       directions[departure['DeparturePlatformName']] = 1
     else:
-      directions[departure['DeparturePlatformName']] ++
+      directions[departure['DeparturePlatformName']] += 1
 
     # Limit hits by platform
     if directions[departure['DeparturePlatformName']] > limitresults:
       continue
 
+    # Start outputting
+
     # Icon for type of transportation
-    outputline += TransportationType[VehicleMode.text]
+    outputline += TransportationType[departure['VehicleMode']]
 
     # Line number, name, platform
     outputline += "%s %s %s " \
-      % (PublishedLineName.rjust(3), DestinationName.ljust(24), '{:<19.19}'.format(DeparturePlatformName))
+      % (departure['PublishedLineName'].rjust(3), departure['DestinationName'].ljust(24), '{:<19.19}'.format(departure['DeparturePlatformName']))
 
-    if AimedDepartureTime.day == datetime.date.today().day:
+    if departure['AimedDepartureTime'].day == datetime.date.today().day:
       outputline += \
-      "%s" % str(AimedDepartureTime.strftime("%H:%M"))
-      outputline += 'kø' if 'true' == InCongestion else '  '
+      "%s" % str(departure['AimedDepartureTime'].strftime("%H:%M"))
+      outputline += 'kø' if 'true' == departure['InCongestion'] else '  '
     else:
       outputline += \
-      "%s" % str(AimedDepartureTime).ljust(17)
+      "%s" % str(departure['AimedDepartureTime']).ljust(17)
 
-    if 'PT0S' != Delay:
-      outputline += ' ' + Delay.ljust(10)
+    if departure['Delay'] and 'PT0S' != departure['Delay']:
+      outputline += ' ' + str(departure['Delay']).ljust(10)
 
-    output.append([DeparturePlatformName, outputline])
-
-  print (output)
+    print(outputline)
 
 
 if __name__ == '__main__':
