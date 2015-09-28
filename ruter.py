@@ -19,7 +19,7 @@
 system_version = '0.4'
 system_name = 'ruter.py'
 
-import sys, datetime, time, urllib.request, urllib.error, urllib.parse, re, os.path
+import sys, datetime, time, urllib.request, urllib.error, re, os.path
 import xml.etree.ElementTree as ET
 
 TransportationType = {
@@ -42,6 +42,7 @@ schema='{http://schemas.datacontract.org/2004/07/Ruter.Reis.Api.Models}'
 stopsfile='GetStopsRuter.xml'
 stopsurl='http://reisapi.ruter.no/Place/GetStopsRuter'
 verbose=False
+ascii=False
 
 def usage():
   print('Bruk: %s [-a] [-l] [-n] [-v] <stasjonsnavn|stasjonsid>' % sys.argv[0])
@@ -160,9 +161,141 @@ def parse_xml(xml, filename):
   return tree
 
 
-''' Read stopfile and return name '''
-def find_stop_by_name(name_needle):
-  return None
+def get_stopid(stopname):
+  if verbose:
+    print("stopname", stopname)
+
+  stopid=None
+
+  ''' Check if we have number or name '''
+  if not stopname.isdigit():
+    if verbose:
+      print("Looking up stopname.")
+    stops = fetch_stops(stopsfile, stopname)
+
+    if len(stops) > 30:
+      print("%s ga for mange treff, prøv igjen." % stopname)
+      sys.exit(3)
+    elif len(stops) > 1:
+      print("Flere treff, angi mer nøyaktig:")
+      for key in stops:
+        print("[%d] %s" % (stops[key], key))
+      sys.exit(3) #Too many hits
+    elif 0 == len(stops):
+      print("Ingen treff på stoppnavn.")
+      sys.exit(4) #No hits
+
+    selected_stop = list(stops.keys())[0]
+    stopid = stops[selected_stop]
+    print("Avganger fra %s, oppdatert %s" \
+      % (selected_stop, datetime.datetime.now().strftime("%H:%M")))
+
+  else:
+    if verbose:
+      print("Looking up stopid.")
+    stopid = stopname
+
+  return stopid
+
+
+def get_departures (stopid, localxml):
+  departures=[]
+
+  xmlroot = None
+  if localxml:
+    xmlroot = parse_xml(None, localxml)
+  else:
+    xmlroot = parse_xml(fetch_api_xml(apiurl + str(stopid)), None)
+
+  ''' Dig out values from xml '''
+  if verbose:
+    print ("Found %d MonitoredStopVisits" % len(xmlroot.findall(schema + 'MonitoredStopVisit')))
+
+  for counter, MonitoredStopVisit in enumerate(xmlroot.findall(schema + 'MonitoredStopVisit')):
+    departure={}
+
+    MonitoredVehicleJourney = \
+      MonitoredStopVisit.find(schema + 'MonitoredVehicleJourney')
+    departure['DestinationName'] = MonitoredVehicleJourney.find(schema + \
+      'DestinationName').text
+
+    departure['Delay'] = MonitoredVehicleJourney.find(schema + 'Delay').text
+    VehicleMode = MonitoredVehicleJourney.find(schema + 'VehicleMode')
+    MonitoredCall = MonitoredVehicleJourney.find(schema + 'MonitoredCall')
+    #MonitoredVehicleJourney.find(schema + 'Delay')
+    departure['PublishedLineName'] = MonitoredVehicleJourney.find(schema + \
+      'PublishedLineName').text
+
+    departure['DeparturePlatformName'] = MonitoredCall.find(schema + 'DeparturePlatformName').text
+
+    #print "MonitoredVehicleJourney", MonitoredVehicleJourney.getchildren()
+
+    # Fetch and convert time, original 2015-09-03T18:19:00+02:00
+    # TODO: currently skipping UTC offset
+    departure['AimedDepartureTime'] = \
+      datetime.datetime.strptime(MonitoredCall.find(schema + \
+      'AimedDepartureTime').text[:19], "%Y-%m-%dT%H:%M:%S")
+
+    departure['InCongestion'] = MonitoredVehicleJourney.find(schema + 'InCongestion').text
+
+    departures.append(departure)
+
+  return departures
+
+
+''' Print main output '''
+def print_departures(departures, platform_number, limitresults, line_number):
+  if verbose:
+    print(departures[0])
+  output=''
+  directions={}
+
+  print("Linje/Destinasjon             Platform            Tid    Forsinkelse")
+
+  for counter, departure in enumerate(departures):
+    outputline=''
+
+    # Limit results by line_number
+    if line_number:
+      if str(line_number) != PublishedLineName:
+        continue
+
+    # Limit results by platform_number
+    if platform_number:
+      if str(platform_number) != DeparturePlatformName:
+        continue
+
+    # Keep list of platforms with number of hits
+    if departure['DeparturePlatformName'] not in directions.keys():
+      directions[departure['DeparturePlatformName']] = 1
+    else:
+      directions[departure['DeparturePlatformName']] ++
+
+    # Limit hits by platform
+    if directions[departure['DeparturePlatformName']] > limitresults:
+      continue
+
+    # Icon for type of transportation
+    outputline += TransportationType[VehicleMode.text]
+
+    # Line number, name, platform
+    outputline += "%s %s %s " \
+      % (PublishedLineName.rjust(3), DestinationName.ljust(24), '{:<19.19}'.format(DeparturePlatformName))
+
+    if AimedDepartureTime.day == datetime.date.today().day:
+      outputline += \
+      "%s" % str(AimedDepartureTime.strftime("%H:%M"))
+      outputline += 'kø' if 'true' == InCongestion else '  '
+    else:
+      outputline += \
+      "%s" % str(AimedDepartureTime).ljust(17)
+
+    if 'PT0S' != Delay:
+      outputline += ' ' + Delay.ljust(10)
+
+    output.append([DeparturePlatformName, outputline])
+
+  print (output)
 
 
 if __name__ == '__main__':
@@ -170,7 +303,6 @@ if __name__ == '__main__':
   limitresults=20
   localxml=None
   output=[]
-  directions={} # Dict of directions at this stop
   line_number=None
   platform_number=None
   stopid = None
@@ -216,119 +348,8 @@ if __name__ == '__main__':
   else:
     stopname = ''.join(args[0:])
 
-  if verbose:
-    print("stopname", stopname)
-
-  ''' Check if we have number or name '''
-  if not stopname.isdigit():
-    if verbose:
-      print("Looking up stopname.")
-    stops = fetch_stops(stopsfile, stopname)
-
-    if len(stops) > 30:
-      print("%s ga for mange treff, prøv igjen." % stopname)
-      sys.exit(3)
-    elif len(stops) > 1:
-      print("Flere treff, angi mer nøyaktig:")
-      for key in stops:
-        print("[%d] %s" % (stops[key], key))
-      sys.exit(3) #Too many hits
-    elif 0 == len(stops):
-      print("Ingen treff på stoppnavn.")
-      sys.exit(4) #No hits
-
-    selected_stop = list(stops.keys())[0]
-    stopid = stops[selected_stop]
-    print("Avganger fra %s, oppdatert %s" \
-      % (selected_stop, datetime.datetime.now().strftime("%H:%M")))
-
-  else:
-    if verbose:
-      print("Looking up stopid.")
-    stopid = stopname
-
-  xmlroot = None
-  if localxml:
-    xmlroot = parse_xml(None, localxml)
-  else:
-    xmlroot = parse_xml(fetch_api_xml(apiurl + str(stopid)), None)
-
-  ''' Dig out values from xml '''
-  if verbose:
-    print ("Found %d MonitoredStopVisits" % len(xmlroot.findall(schema + 'MonitoredStopVisit')))
-
-  for counter, MonitoredStopVisit in enumerate(xmlroot.findall(schema + 'MonitoredStopVisit')):
-    outputline=''
-
-    MonitoredVehicleJourney = \
-      MonitoredStopVisit.find(schema + 'MonitoredVehicleJourney')
-    DestinationName = MonitoredVehicleJourney.find(schema + \
-      'DestinationName').text
-
-    Delay = MonitoredVehicleJourney.find(schema + 'Delay').text
-    if not Delay:
-      Delay = ''
-    VehicleMode = MonitoredVehicleJourney.find(schema + 'VehicleMode')
-    MonitoredCall = MonitoredVehicleJourney.find(schema + 'MonitoredCall')
-    MonitoredVehicleJourney.find(schema + 'Delay')
-    PublishedLineName = MonitoredVehicleJourney.find(schema + \
-      'PublishedLineName').text
-
-    DeparturePlatformName = MonitoredCall.find(schema + 'DeparturePlatformName').text
-
-    #print "MonitoredVehicleJourney", MonitoredVehicleJourney.getchildren()
-
-    # Fetch and convert time, original 2015-09-03T18:19:00+02:00
-    # TODO: currently skipping UTC offset
-    AimedDepartureTime = \
-      datetime.datetime.strptime(MonitoredCall.find(schema + \
-      'AimedDepartureTime').text[:19], "%Y-%m-%dT%H:%M:%S")
-
-    InCongestion = MonitoredVehicleJourney.find(schema + 'InCongestion').text
-    #print (InCongestion)
-
-    # Limit results by line_number
-    if line_number:
-      if str(line_number) != PublishedLineName:
-        continue
-
-    # Limit results by platform_number
-    if platform_number:
-      if str(platform_number) != DeparturePlatformName:
-        continue
-
-    # Assemble output
-    # Icon for type of transportation
-    outputline += TransportationType[VehicleMode.text]
-
-    # Line number, name, platform
-    outputline += "%s %s %s " \
-      % (PublishedLineName.rjust(3), DestinationName.ljust(24), '{:<19.19}'.format(DeparturePlatformName))
-
-    if AimedDepartureTime.day == datetime.date.today().day:
-      outputline += \
-      "%s" % str(AimedDepartureTime.strftime("%H:%M"))
-      outputline += 'kø' if 'true' == InCongestion else '  '
-    else:
-      outputline += \
-      "%s" % str(AimedDepartureTime).ljust(17)
-
-    if 'PT0S' != Delay:
-      outputline += ' ' + Delay.ljust(10)
-
-    output.append([DeparturePlatformName, outputline])
-    if DeparturePlatformName not in directions:
-      directions[DeparturePlatformName] = 0
-
-  if verbose:
-    print(output)
-
-  output.sort()
-  ''' Print main output '''
-  print("Linje/Destinasjon             Platform            Tid    Forsinkelse")
-  for counter, outarray in enumerate(output):
-    if limitresults > directions[outarray[0]]:
-      print(outarray[1])
-      directions[outarray[0]]+=1
+  stopid = get_stopid(stopname)
+  departures = get_departures(stopid, localxml)
+  print_departures(departures, platform_number, limitresults, line_number)  
 
   sys.exit(0)
