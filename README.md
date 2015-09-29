@@ -62,5 +62,7 @@ TODO:
 * Split core functions to a library.
 
 One-liner sketches:
+```
 ./ruter.py vøyenbrua -l 28 -p 2
 🚌 28 Fornebu fra vøyenbrua 15:49 (1 min)  15:59 (Kø, 11 min)  16:09 (21 min.)
+```
