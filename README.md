@@ -2,29 +2,32 @@ A python3 client for ruter.no, made using the API at http://labs.ruter.no/
 
 GNU AFFERO GENERAL PUBLIC LICENSE
 
-Example run of beta 0.4:
+Example run of beta 0.5:
 
 
 Direct hit:
 
 ```
-$ ./ruter.py lijordet
-Avganger fra lijordet, oppdatert 22:15
-Linje/Destinasjon             Platform Tid           Type Forsinkelse
-  5 Vestli                    1        22:19:59      Ⓣ
-  5 Vestli                    1        22:34:59      Ⓣ
-  5 Vestli                    1        22:49:59      Ⓣ
+./ruter.py lijordet -n 2
+Avganger fra lijordet, oppdatert 11:14
+Linje/Destinasjon             Platform            Tid    Forsinkelse
+Ⓣ  5 Vestli                   1 (Retning sentrum) 11:19
+Ⓣ  5 Vestli                   1 (Retning sentrum) 11:29
+Ⓣ  5 Østerås                  2 (Retning Østerås) 11:13   PT177S
+Ⓣ  5 Østerås                  2 (Retning Østerås) 11:22   PT46S
 ```
 
 Long name:
 
 ```
-./ruter.py "borgen (i sørkedalsveien)"
-Avganger fra borgen (i sørkedalsveien), oppdatert 22:15
-Linje/Destinasjon             Platform Tid           Type Forsinkelse
- 45 Majorstuen                1        22:18:00      🚌
- 45 Majorstuen                1        22:48:00      🚌
- 45 Voksen skog               2        22:34:00      🚌
+./ruter.py "majorstuen (i kirkeveien)" -n 1
+Avganger fra majorstuen (i kirkeveien), oppdatert 11:21
+Linje/Destinasjon             Platform            Tid    Forsinkelse
+🚌 20 Galgeberg                1                   11:24   PT173S
+🚋 19 Ljabru                   11                  11:30
+🚋 12 Disen                    12                  11:30
+🚋 11 Kjelsås                  14                  11:24
+🚌 20 Skøyen                   2                   11:17   PT382S
 ```
 
 Several hits:
@@ -41,15 +44,11 @@ Flere treff, angi mer nøyaktig:
 Refined search:
 
 ```
-./ruter.py vøyenbrua -l 28 -p 2
-Avganger fra vøyenbrua, oppdatert 15:45
-Linje/Destinasjon             Platform Tid           Type Forsinkelse
- 28 Fornebu                   2        15:49:00      🚌    PT70S
- 28 Fornebu                   2        15:59:00      🚌
- 28 Fornebu                   2        16:09:00      🚌
- 28 Fornebu                   2        16:19:00      🚌
- 28 Fornebu                   2        16:29:00      🚌
- 28 Fornebu                   2        16:39:00      🚌
+./ruter.py vøyenbrua -l 28 -p 2 -n 2
+Avganger fra vøyenbrua, oppdatert 11:21
+Linje/Destinasjon             Platform            Tid    Forsinkelse
+🚌 28 Fornebu                  2                   14:39
+🚌 28 Fornebu                  2                   14:49
 ```
 
 TODO:

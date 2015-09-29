@@ -45,15 +45,15 @@ stopsurl='http://reisapi.ruter.no/Place/GetStopsRuter'
 verbose=False
 ascii=False
 
-def usage():
+def usage(limitresults = 5):
   print('Bruk: %s [-a] [-l] [-n] [-v] <stasjonsnavn|stasjonsid>' % sys.argv[0])
   print('''
   -h       Vis denne hjelpen.
   -l       Begrens treff til kun linje-nummer.
-  -n       Begrens treff pr. platform, tilbakefall er 5.
+  -n       Begrens treff pr. platform, tilbakefall er %s.
   -p       Begrens treff til platform-nummer.
   -v       Verbose for utfyllende informasjon
-  ''')
+  ''' % limitresults)
 
   for icon in TransportationType:
     print (icon, TransportationType[icon])
@@ -262,12 +262,12 @@ def print_departures(departures, platform_number, limitresults, line_number):
 
     # Limit results by line_number
     if line_number:
-      if str(line_number) != PublishedLineName:
+      if str(line_number) != departure['PublishedLineName']:
         continue
 
     # Limit results by platform_number
     if platform_number:
-      if str(platform_number) != DeparturePlatformName:
+      if str(platform_number) != departure['DeparturePlatformName']:
         continue
 
     # Keep list of platforms with number of hits
@@ -305,7 +305,7 @@ def print_departures(departures, platform_number, limitresults, line_number):
 
 if __name__ == '__main__':
   stopname=''
-  limitresults=20
+  limitresults=7
   localxml=None
   output=[]
   line_number=None
@@ -315,7 +315,7 @@ if __name__ == '__main__':
   args = sys.argv[1:]
 
   if '-h' in args:
-    usage()
+    usage(limitresults)
 
   if '-v' in args:
     verbose = True
@@ -349,7 +349,7 @@ if __name__ == '__main__':
     args.pop(args.index('-l'))
 
   if len(args) < 1:
-    usage()
+    usage(limitresults)
   else:
     stopname = ''.join(args[0:])
 
