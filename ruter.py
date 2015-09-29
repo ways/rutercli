@@ -49,9 +49,13 @@ def usage(limitresults = 5):
   print('Bruk: %s [-a] [-l] [-n] [-v] <stasjonsnavn|stasjonsid>' % sys.argv[0])
   print('''
   -h       Vis denne hjelpen.
+
+  -a       ASCII for ikke å bruke Unicode symboler/ikoner
   -l       Begrens treff til kun linje-nummer.
   -n       Begrens treff pr. platform, tilbakefall er %s.
+  -o       En-linje-visning
   -p       Begrens treff til platform-nummer.
+  -t       Bruk lokal fil ruter.temp som xml-kilde (kun for utvikling)
   -v       Verbose for utfyllende informasjon
   ''' % limitresults)
 
@@ -60,9 +64,6 @@ def usage(limitresults = 5):
 
   for color_code in color_codes:
     print (color_code, color_codes[color_code])
-
-  #-a       ASCII for ikke å bruke Unicode symboler/ikoner
-  #-t       Bruk lokal fil ruter.temp som xml-kilde (kun for utvikling)
 
   print(system_name, 'version', system_version)
   sys.exit(1)
