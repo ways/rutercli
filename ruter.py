@@ -304,7 +304,10 @@ def print_departures(departures, platform_number, limitresults, line_number):
     if departure['Delay'] and 'PT0S' != departure['Delay']:
       outputline += ' ' + str(departure['Delay']).ljust(10)
 
-    print(outputline)
+    if not ascii:
+      print(outputline)
+    else: #TODO: Ugly hack to not care about encoding problems on various platforms.
+      print(outputline.encode('ascii','ignore'))
 
 
 if __name__ == '__main__':

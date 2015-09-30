@@ -1,13 +1,20 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+<head>
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+
 <pre>
 <?php
   $stopname='';
   $output=[];
   $return_var=0;
-  $command='/local/www/graph.no/ruter/ruter.py';
+  $command='/local/www/graph.no/ruter/ruter.py -a -n 3 ';
 
   if (isset($_GET['stopname']) && ctype_alpha($_GET['stopname']) ) {
     $stopname=strtolower($_GET['stopname']);
-    $command.=' '.$stopname;
+    $command.=$stopname;
   }
 
   echo "<h1>#</h1>";
@@ -26,9 +33,10 @@
                        'return'=>$rtn
                       );
          }
-  var_export(my_exec('echo -e $(</dev/stdin) | wc -l', 'h\\nel\\nlo')); 
-  print_r(my_exec('/bin/ls'));
-  print_r(my_exec($command));
+  #var_export(my_exec('echo -e $(</dev/stdin) | wc -l', 'h\\nel\\nlo')); 
+  #print_r(my_exec($command));
+  foreach (my_exec($command) as $line)
+    echo $line;
 ?>
 
 <form method="get" action="">
