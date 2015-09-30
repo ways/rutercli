@@ -10,9 +10,9 @@
   $stopname='';
   $output=[];
   $return_var=0;
-  $command='/local/www/graph.no/ruter/ruter.py -a -n 3 ';
+  $command='/local/www/graph.no/ruter/ruter.py -a -n 5 ';
 
-  if (isset($_GET['stopname']) && ctype_alpha($_GET['stopname']) ) {
+  if (isset($_GET['stopname']) && ctype_alnum($_GET['stopname']) ) {
     $stopname=strtolower($_GET['stopname']);
     $command.=$stopname;
   }
@@ -35,13 +35,15 @@
          }
   #var_export(my_exec('echo -e $(</dev/stdin) | wc -l', 'h\\nel\\nlo')); 
   #print_r(my_exec($command));
-  foreach (my_exec($command) as $line)
-    echo $line;
+  if ($stopname) {
+    foreach (my_exec($command) as $line)
+      echo $line;
+  }
 ?>
 
 <form method="get" action="">
       <p>
-         Stoppnavn: <input type="text" name="stopname">
+         Stoppnavn: <input type="text" name="stopname" value="<?php echo $stopname; ?>">
          <input type="submit" value="Submit">
          </p>
       </form>
