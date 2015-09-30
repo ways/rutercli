@@ -284,7 +284,10 @@ def print_departures(departures, platform_number, limitresults, line_number):
     # Start outputting
 
     # Icon for type of transportation
-    outputline += TransportationType[departure['VehicleMode']]
+    if not ascii:
+      outputline += TransportationType[departure['VehicleMode']]
+    else:
+      outputline += departure['VehicleMode']
 
     # Line number, name, platform
     outputline += "%s %s %s " \
@@ -348,6 +351,10 @@ if __name__ == '__main__':
   if '-d' in args:
     localxml = 'ruter.temp'
     args.pop(args.index('-l'))
+
+  if '-a' in args:
+    ascii = True
+    args.pop(args.index('-a'))
 
   if len(args) < 1:
     usage(limitresults)
