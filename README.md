@@ -57,7 +57,6 @@ TODO:
 * One-line interface for status bar
 * Decode delay data
 * Check if any vehicles support estimated load data yet
-* None-unicode mode
 * Set up as finger/web service?
 * Split core functions to a library.
 
