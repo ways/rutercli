@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-system_version = '0.5'
+system_version = '0.6'
 system_name = 'ruter.py'
 
 import sys, datetime, time, urllib.request, urllib.error, re, os.path
@@ -29,8 +29,14 @@ TransportationType = {
   'tram':  '🚋',
   'metro': 'Ⓣ', #🚇
 }
-stopicon="🚏"
-timeicon="🕒"
+
+TransportationTypeAscii = {
+  'bus':   'B',
+  'ferry': 'F',
+  'rail':  'R',
+  'tram':  'T',
+  'metro': 'M',
+}
 
 # html to terminal safe colors
 #TODO: colors!
@@ -44,19 +50,21 @@ stopsfile='GetStopsRuter.xml'
 stopsurl='http://reisapi.ruter.no/Place/GetStopsRuter'
 verbose=False
 ascii=False
+deviations=True
 
 def usage(limitresults = 5):
   print('Bruk: %s [-a] [-l] [-n] [-v] <stasjonsnavn|stasjonsid>' % sys.argv[0])
   print('''
   -h       Vis denne hjelpen.
 
-  -a       ASCII for ikke å bruke Unicode symboler/ikoner
+  -a       ASCII for ikke å bruke Unicode symboler/ikoner.
+  -d       Ikke vis avvik.
   -l       Begrens treff til kun linje-nummer.
   -n       Begrens treff pr. platform, tilbakefall er %s.
-  -o       En-linje-visning
+  -o       En-linje-visning.
   -p       Begrens treff til platform-nummer.
-  -t       Bruk lokal fil ruter.temp som xml-kilde (kun for utvikling)
-  -v       Verbose for utfyllende informasjon
+  -t       Bruk lokal fil ruter.temp som xml-kilde (kun for utvikling).
+  -v       Verbose for utfyllende informasjon.
   ''' % limitresults)
 
   for icon in TransportationType:
@@ -242,12 +250,26 @@ def get_departures (stopid, localxml):
       'AimedDepartureTime').text[:19], "%Y-%m-%dT%H:%M:%S")
 
     departure['InCongestion'] = MonitoredVehicleJourney.find(schema + 'InCongestion').text
-    departure['OccupancyPercentage'] = MonitoredStopVisit.find(schema + 'Extensions').find(schema + 'OccupancyData').find(schema + 'OccupancyPercentage').text
+
+    departure['OccupancyPercentage'] = -1
+    if 'true' == MonitoredStopVisit.find(schema + 'Extensions').find(schema + 'OccupancyData').find(schema + 'OccupancyAvailable').text:
+      departure['OccupancyPercentage'] = MonitoredStopVisit.find(schema + 'Extensions').find(schema + 'OccupancyData').find(schema + 'OccupancyPercentage').text
+
     departure['LineColour'] = MonitoredStopVisit.find(schema + 'Extensions').find(schema + 'LineColour')
     departure['Deviations'] = {}
-    for d in MonitoredStopVisit.find(schema + 'Extensions').find(schema + 'Deviations'): #id, header
-      departure['Deviations'][MonitoredStopVisit.find(schema + 'Extensions').find(schema + 'Deviations').find(schema + 'id')] = \
-      MonitoredStopVisit.find(schema + 'Extensions').find(schema + 'Deviations').find(schema + 'header')
+    for deviation in MonitoredStopVisit.find(schema + 'Extensions').find(schema + 'Deviations').getchildren(): #id, header
+      departure['Deviations'][deviation.find(schema + 'ID').text] = deviation.find(schema + 'Header').text
+    
+    # Lenght of vehicle
+    departure['NumberOfBlockParts'] = 0
+    try:
+      departure['NumberOfBlockParts'] = MonitoredVehicleJourney.find(schema + 'TrainBlockPart').find(schema + 'NumberOfBlockParts').text
+      if verbose:
+        print (NumberOfBlockParts, departure['NumberOfBlockParts'])
+    except AttributeError:
+      pass
+    except NameError:
+      pass
 
     departures.append(departure)
 
@@ -259,7 +281,7 @@ def get_departures (stopid, localxml):
 def format_departures(departures, platform_number, limitresults, line_number):
   if verbose:
     print(departures[0])
-  output="Linje/Destinasjon                  Platform            Tid      Forsinkelse     *\n"
+  output="Linje/Destinasjon               Platform              Full  Tid     Forsinkelse Avvik\n"
   directions={}
 
   for counter, departure in enumerate(departures):
@@ -287,15 +309,22 @@ def format_departures(departures, platform_number, limitresults, line_number):
 
     # Start outputting
 
+    # Icon, double for long vehicles
+    icon = '{:<4.4}'.format( (TransportationTypeAscii[departure['VehicleMode']] if departure['NumberOfBlockParts'] in [0,1,3] else TransportationTypeAscii[departure['VehicleMode']] + departure['NumberOfBlockParts'] ) )
+    if not ascii:
+      icon = '{:<4.4}'.format( (TransportationType[departure['VehicleMode']] + ' ' + str(departure['NumberOfBlockParts']) if departure['NumberOfBlockParts'] in [0,1,3] else TransportationType[departure['VehicleMode']] + ' ' + str(departure['NumberOfBlockParts']) ))
+
     outputline += "%s %s %s %s " % (
     # Icon for type of transportation
-      '{:<5.5}'.format(TransportationType[departure['VehicleMode']]) \
-        if not ascii else '{:<5.5}'.format(departure['VehicleMode']),
+      icon, 
     # Line number, name, platform
       '{:<3.3}'.format(departure['PublishedLineName'].rjust(3)),
       '{:<24.24}'.format(departure['DestinationName']),
       '{:<19.19}'.format(departure['DeparturePlatformName'])
     )
+
+    # Occupancy
+    outputline += '{:<3.3}%  '.format(departure['OccupancyPercentage'].rjust(3)) if -1 < int(departure['OccupancyPercentage']) else '  -   '
 
     # Time as HH:MM[kø] if today
     if departure['AimedDepartureTime'].day == datetime.date.today().day:
@@ -303,16 +332,22 @@ def format_departures(departures, platform_number, limitresults, line_number):
     else:
       outputline += "%s" % str(departure['AimedDepartureTime']).ljust(17)
 
-    if departure['Delay'] and 'PT0S' != departure['Delay']:
-      outputline += ' ' + str(departure['Delay']).ljust(10)
+    # Delay
+    outputline += '{:<12.12}'.format(
+      ( departure['Delay'] if (departure['Delay'] and 'PT0S' != departure['Delay']) else '-' )
+    )
 
     # Deviations
+    deviation_formatted = ''
     for deviation in departure['Deviations']:
-      outputline += ' ' if deviation else '*'
+      print (deviation)
+      deviation_formatted += "(%s) %s " % (deviation, departure['Deviations'][deviation])
+    if '' == deviation_formatted:
+      deviation_formatted = '-'
 
     # Done
     if not ascii:
-      output += outputline + "\n"
+      output += outputline + deviation_formatted + "\n"
     else: #TODO: Ugly hack to not care about encoding problems on various platforms yet.
       output += str(outputline.encode('ascii','ignore')) + "\n"
 
