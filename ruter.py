@@ -242,6 +242,12 @@ def get_departures (stopid, localxml):
       'AimedDepartureTime').text[:19], "%Y-%m-%dT%H:%M:%S")
 
     departure['InCongestion'] = MonitoredVehicleJourney.find(schema + 'InCongestion').text
+    departure['OccupancyPercentage'] = MonitoredStopVisit.find(schema + 'Extensions').find(schema + 'OccupancyData').find(schema + 'OccupancyPercentage').text
+    departure['LineColour'] = MonitoredStopVisit.find(schema + 'Extensions').find(schema + 'LineColour')
+    departure['Deviations'] = {}
+    for d in MonitoredStopVisit.find(schema + 'Extensions').find(schema + 'Deviations'): #id, header
+      departure['Deviations'][MonitoredStopVisit.find(schema + 'Extensions').find(schema + 'Deviations').find(schema + 'id')] = \
+      MonitoredStopVisit.find(schema + 'Extensions').find(schema + 'Deviations').find(schema + 'header')
 
     departures.append(departure)
 
@@ -249,11 +255,11 @@ def get_departures (stopid, localxml):
   return sorted(departures, key=lambda k: k['DeparturePlatformName'])
 
 
-''' Print main output '''
+''' Prepare main output '''
 def format_departures(departures, platform_number, limitresults, line_number):
   if verbose:
     print(departures[0])
-  output="Linje/Destinasjon                  Platform            Tid      Forsinkelse     #\n"
+  output="Linje/Destinasjon                  Platform            Tid      Forsinkelse     *\n"
   directions={}
 
   for counter, departure in enumerate(departures):
@@ -300,6 +306,11 @@ def format_departures(departures, platform_number, limitresults, line_number):
     if departure['Delay'] and 'PT0S' != departure['Delay']:
       outputline += ' ' + str(departure['Delay']).ljust(10)
 
+    # Deviations
+    for deviation in departure['Deviations']:
+      outputline += ' ' if deviation else '*'
+
+    # Done
     if not ascii:
       output += outputline + "\n"
     else: #TODO: Ugly hack to not care about encoding problems on various platforms yet.
