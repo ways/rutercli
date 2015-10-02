@@ -310,9 +310,13 @@ def format_departures(departures, platform_number, limitresults, line_number):
     # Start outputting
 
     # Icon, double for long vehicles
-    icon = '{:<4.4}'.format( (TransportationTypeAscii[departure['VehicleMode']] if departure['NumberOfBlockParts'] in [0,1,3] else TransportationTypeAscii[departure['VehicleMode']] + departure['NumberOfBlockParts'] ) )
+    #icon = '{:<4.4}'.format(
+    #  (TransportationTypeAscii[departure['VehicleMode']] if departure['NumberOfBlockParts'] in [0,1,3] else TransportationTypeAscii[departure['VehicleMode']] + departure['NumberOfBlockParts'] ) )
     if not ascii:
-      icon = '{:<4.4}'.format( (TransportationType[departure['VehicleMode']] + ' ' + str(departure['NumberOfBlockParts']) if departure['NumberOfBlockParts'] in [0,1,3] else TransportationType[departure['VehicleMode']] + ' ' + str(departure['NumberOfBlockParts']) ))
+      icon = '{:<4.4}'.format( '{0} {0}' %  
+       (TransportationType[departure['VehicleMode']], TransportationType[departure['VehicleMode']])
+         if departure['NumberOfBlockParts'] in [0,1,3]
+         else TransportationType[departure['VehicleMode']] + ' ' + str(departure['NumberOfBlockParts']) ))
 
     outputline += "%s %s %s %s " % (
     # Icon for type of transportation
