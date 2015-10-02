@@ -250,13 +250,11 @@ def get_departures (stopid, localxml):
 
 
 ''' Print main output '''
-def print_departures(departures, platform_number, limitresults, line_number):
+def format_departures(departures, platform_number, limitresults, line_number):
   if verbose:
     print(departures[0])
-  output=[]
+  output="Linje/Destinasjon             Platform            Tid    Forsinkelse            #\n"
   directions={}
-
-  print("Linje/Destinasjon             Platform            Tid    Forsinkelse")
 
   for counter, departure in enumerate(departures):
     outputline=''
@@ -305,10 +303,11 @@ def print_departures(departures, platform_number, limitresults, line_number):
       outputline += ' ' + str(departure['Delay']).ljust(10)
 
     if not ascii:
-      print(outputline)
-    else: #TODO: Ugly hack to not care about encoding problems on various platforms.
-      print(outputline.encode('ascii','ignore'))
+      output += outputline + "\n"
+    else: #TODO: Ugly hack to not care about encoding problems on various platforms yet.
+      output += outputline.encode('ascii','ignore') + "\n"
 
+  return output
 
 if __name__ == '__main__':
   stopname=''
@@ -366,6 +365,6 @@ if __name__ == '__main__':
 
   stopid = get_stopid(stopname)
   departures = get_departures(stopid, localxml)
-  print_departures(departures, platform_number, limitresults, line_number)  
+  print (format_departures(departures, platform_number, limitresults, line_number))
 
   sys.exit(0)
