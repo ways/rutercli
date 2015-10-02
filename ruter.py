@@ -253,7 +253,7 @@ def get_departures (stopid, localxml):
 def format_departures(departures, platform_number, limitresults, line_number):
   if verbose:
     print(departures[0])
-  output="Linje/Destinasjon             Platform            Tid    Forsinkelse            #\n"
+  output="Linje/Destinasjon                  Platform            Tid      Forsinkelse     #\n"
   directions={}
 
   for counter, departure in enumerate(departures):
@@ -281,23 +281,21 @@ def format_departures(departures, platform_number, limitresults, line_number):
 
     # Start outputting
 
+    outputline += "%s %s %s %s " % (
     # Icon for type of transportation
-    if not ascii:
-      outputline += TransportationType[departure['VehicleMode']]
-    else:
-      outputline += departure['VehicleMode']
-
+      '{:<5.5}'.format(TransportationType[departure['VehicleMode']]) \
+        if not ascii else '{:<5.5}'.format(departure['VehicleMode']),
     # Line number, name, platform
-    outputline += "%s %s %s " \
-      % (departure['PublishedLineName'].rjust(3), departure['DestinationName'].ljust(24), '{:<19.19}'.format(departure['DeparturePlatformName']))
+      '{:<3.3}'.format(departure['PublishedLineName'].rjust(3)),
+      '{:<24.24}'.format(departure['DestinationName']),
+      '{:<19.19}'.format(departure['DeparturePlatformName'])
+    )
 
+    # Time as HH:MM[kø] if today
     if departure['AimedDepartureTime'].day == datetime.date.today().day:
-      outputline += \
-      "%s" % str(departure['AimedDepartureTime'].strftime("%H:%M"))
-      outputline += 'kø' if 'true' == departure['InCongestion'] else '  '
+      outputline += "%s " % ( str(departure['AimedDepartureTime'].strftime("%H:%M")) + ('kø' if 'true' == departure['InCongestion'] else '  ') )
     else:
-      outputline += \
-      "%s" % str(departure['AimedDepartureTime']).ljust(17)
+      outputline += "%s" % str(departure['AimedDepartureTime']).ljust(17)
 
     if departure['Delay'] and 'PT0S' != departure['Delay']:
       outputline += ' ' + str(departure['Delay']).ljust(10)
@@ -305,7 +303,7 @@ def format_departures(departures, platform_number, limitresults, line_number):
     if not ascii:
       output += outputline + "\n"
     else: #TODO: Ugly hack to not care about encoding problems on various platforms yet.
-      output += outputline.encode('ascii','ignore') + "\n"
+      output += str(outputline.encode('ascii','ignore')) + "\n"
 
   return output
 
