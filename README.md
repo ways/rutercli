@@ -9,25 +9,25 @@ Direct hit:
 
 ```
 ./ruter.py lijordet -n 2
-Avganger fra lijordet, oppdatert 11:14
-Linje/Destinasjon             Platform            Tid    Forsinkelse
-Ⓣ  5 Vestli                   1 (Retning sentrum) 11:19
-Ⓣ  5 Vestli                   1 (Retning sentrum) 11:29
-Ⓣ  5 Østerås                  2 (Retning Østerås) 11:13   PT177S
-Ⓣ  5 Østerås                  2 (Retning Østerås) 11:22   PT46S
+Avganger fra lijordet, oppdatert 12:21
+Linje/Destinasjon                 Platform            Full  Tid     Forsinkelse Avvik
+Ⓣ Ⓣ    5 Vestli                   1 (Retning sentrum)   -   12:34   -           -
+Ⓣ Ⓣ    5 Vestli                   1 (Retning sentrum)   -   12:49   -           -
+Ⓣ Ⓣ    5 Østerås                  2 (Retning Østerås)   -   12:22   PT136S      -
+Ⓣ Ⓣ    5 Østerås                  2 (Retning Østerås)   -   12:37   PT117S      -
 ```
 
 Long name:
 
 ```
 ./ruter.py "majorstuen (i kirkeveien)" -n 1
-Avganger fra majorstuen (i kirkeveien), oppdatert 11:21
-Linje/Destinasjon             Platform            Tid    Forsinkelse
-🚌 20 Galgeberg                1                   11:24   PT173S
-🚋 19 Ljabru                   11                  11:30
-🚋 12 Disen                    12                  11:30
-🚋 11 Kjelsås                  14                  11:24
-🚌 20 Skøyen                   2                   11:17   PT382S
+Avganger fra majorstuen (i kirkeveien), oppdatert 12:22
+Linje/Destinasjon                 Platform            Full  Tid     Forsinkelse Avvik
+🚌     20 Galgeberg                1                     -   12:24   PT326S      (33526) Buss 20: Vi tester fleksible rutetider 
+🚋     19 Ljabru                   11                    -   12:30   -           (31273) Trikk 18/19: Regn med forsinkelser 
+🚋     12 Disen                    12                    0%  12:30   -           (33420) Trikk 12: Omkjøring mellom Kongens gate og Solli retning Majorstuen 
+🚋     11 Kjelsås                  14                    -   12:24   -           -
+🚌     20 Skøyen                   2                    40%  12:25   PT120S      (33526) Buss 20: Vi tester fleksible rutetider 
 ```
 
 Several hits:
@@ -35,28 +35,27 @@ Several hits:
 ```
 $ ./ruter.py majorstuen
 Flere treff, angi mer nøyaktig:
-[3010203] majorstuen (i valkyriegata)
-[3010200] majorstuen [t-bane]
-[3010201] majorstuen (i kirkeveien)
-[3010202] majorstuen (i sørkedalsveien)
+Flere treff, angi mer nøyaktig:
+[3010201] "majorstuen (i kirkeveien)"
+[3010200] "majorstuen [t-bane]"
+[3010202] "majorstuen (i sørkedalsveien)"
+[3010203] "majorstuen (i valkyriegata)"
 ```
 
 Refined search:
 
 ```
-./ruter.py vøyenbrua -l 28 -p 2 -n 2
-Avganger fra vøyenbrua, oppdatert 11:21
-Linje/Destinasjon             Platform            Tid    Forsinkelse
-🚌 28 Fornebu                  2                   14:39
-🚌 28 Fornebu                  2                   14:49
+./ruter.py alexander -l 54 -p 2 -n 2
+Avganger fra alexander kiellands plass, oppdatert 12:25
+Linje/Destinasjon                 Platform            Full  Tid     Forsinkelse Avvik
+🚌     54 Kjelsås stasjon          2                     0%  12:35   PT179S      -
+🚌     54 Kjelsås stasjon          2                     0%  12:45   -           -
 ```
 
 TODO:
 * Colors for lines
-* Show deviations
 * One-line interface for status bar
 * Decode delay data
-* Check if any vehicles support estimated load data yet
 * Set up as finger/web service?
 * Split core functions to a library.
 

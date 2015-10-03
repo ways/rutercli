@@ -192,7 +192,7 @@ def get_stopid(stopname):
     elif len(stops) > 1:
       print("Flere treff, angi mer nøyaktig:")
       for key in stops:
-        print("[%d] %s" % (stops[key], key))
+        print('[%d] "%s"' % (stops[key], key))
       sys.exit(3) #Too many hits
     elif 0 == len(stops):
       print("Ingen treff på stoppnavn.")
@@ -346,7 +346,6 @@ def format_departures(departures, platform_number, limitresults, line_number):
     # Deviations
     deviation_formatted = ''
     for deviation in departure['Deviations']:
-      print (deviation)
       deviation_formatted += "(%s) %s " % (deviation, departure['Deviations'][deviation])
     if '' == deviation_formatted:
       deviation_formatted = '-'
