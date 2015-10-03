@@ -3,6 +3,7 @@
 from wsgiref.simple_server import make_server
 from cgi import parse_qs, escape
 import sys
+from wsgiref.validate import validator
 
 sys.path.insert(0, '/local/www/graph.no/ruter/')
 
@@ -47,4 +48,10 @@ def application(environ, start_response):
    start_response(status, response_headers)
 
    return [response_body]
+
+validator_app = validator(application)
+
+httpd = make_server('', 8000, application)
+print("Listening on port 8000....")
+httpd.serve_forever()
 
