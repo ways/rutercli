@@ -13,7 +13,7 @@ stopname=''
 html = """
 <html>
 <body>
-  %s
+<pre>%s</pre>
    <form method="get" action="">
       <p>
          Stopp: <input type="text" name="stopname">
@@ -34,16 +34,14 @@ def application(environ, start_response):
   d = parse_qs(environ['QUERY_STRING'])
 
   # In this idiom you must issue a list containing a default value.
-  stopname = d.get('stopname', [''])[0] # Returns the first age value.
+  stopname = d.get('stopname', [''])[0] # Returns the first value.
 
   # Always escape user input to avoid script injection
   stopname = escape(stopname)
 
-  ruteroutput = ruter.TransportationType['bus']
-
   stopid = ruter.get_stopid(stopname)
   departures = ruter.get_departures(stopid)
-  ruteroutput += format_departures(departures)
+  ruteroutput = ruter.format_departures(departures)
 
   response_body = html % (ruteroutput, stopname or 'Empty')
 

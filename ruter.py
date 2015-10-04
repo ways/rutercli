@@ -82,7 +82,7 @@ def err(string):
 
 """ Check if stopsfile exists, download if necessary.
     Read stopsfile, search for stop, return matches as dict """
-def fetch_stops(filename, name_needle):
+def fetch_stops(name_needle, filename = '/tmp/GetStopsRuter.xml'):
   name_needle = name_needle.lower()
   result = {}
   start = time.time()
@@ -184,7 +184,7 @@ def get_stopid(stopname):
   if not stopname.isdigit():
     if verbose:
       print("Looking up stopname.")
-    stops = fetch_stops(stopsfile, stopname)
+    stops = fetch_stops(stopname)
 
     if len(stops) > 30:
       print("%s ga for mange treff, prøv igjen." % stopname)
@@ -211,7 +211,7 @@ def get_stopid(stopname):
   return stopid
 
 
-def get_departures (stopid, localxml):
+def get_departures (stopid, localxml=None):
   departures=[]
 
   xmlroot = None
@@ -278,7 +278,7 @@ def get_departures (stopid, localxml):
 
 
 ''' Prepare main output '''
-def format_departures(departures, platform_number, limitresults, line_number):
+def format_departures(departures, limitresults=7, platform_number=None, line_number=None):
   if verbose:
     print(departures[0])
   output="Linje/Destinasjon                 Platform            Full  Tid     Forsinkelse Avvik\n"
@@ -414,6 +414,6 @@ if __name__ == '__main__':
 
   stopid = get_stopid(stopname)
   departures = get_departures(stopid, localxml)
-  print (format_departures(departures, platform_number, limitresults, line_number))
+  print (format_departures(departures, limitresults, platform_number, line_number))
 
   sys.exit(0)
