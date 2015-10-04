@@ -13,6 +13,7 @@ stopname=''
 html = """
 <html>
 <body>
+  %s
    <form method="get" action="">
       <p>
          Stopp: <input type="text" name="stopname">
@@ -29,29 +30,29 @@ html = """
 
 def application(environ, start_response):
 
-   # Returns a dictionary containing lists as values.
-   d = parse_qs(environ['QUERY_STRING'])
+  # Returns a dictionary containing lists as values.
+  d = parse_qs(environ['QUERY_STRING'])
 
-   # In this idiom you must issue a list containing a default value.
-   stopname = d.get('stopname', [''])[0] # Returns the first age value.
+  # In this idiom you must issue a list containing a default value.
+  stopname = d.get('stopname', [''])[0] # Returns the first age value.
 
-   # Always escape user input to avoid script injection
-   stopname = escape(stopname)
+  # Always escape user input to avoid script injection
+  stopname = escape(stopname)
 
-   response_body = html % (stopname or 'Empty')
+  ruteroutput = ruter.TransportationType['bus']
 
-   status = '200 OK'
+  stopid = ruter.get_stopid(stopname)
+  departures = ruter.get_departures(stopid)
+  ruteroutput += format_departures(departures)
 
-   # Now content type is text/html
-   response_headers = [('Content-Type', 'text/html'),
-                  ('Content-Length', str(len(response_body)))]
-   start_response(status, response_headers)
+  response_body = html % (ruteroutput, stopname or 'Empty')
 
-   return [response_body]
+  status = '200 OK'
 
-validator_app = validator(application)
+  # Now content type is text/html
+  response_headers = [('Content-Type', 'text/html; charset=utf-8'),
+                      ('Content-Length', str(len(response_body)))]
+  start_response(status, response_headers)
 
-httpd = make_server('', 8000, application)
-print("Listening on port 8000....")
-httpd.serve_forever()
+  return [response_body.encode("utf-8")]
 
