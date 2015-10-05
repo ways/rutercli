@@ -2,7 +2,7 @@ A python3 client for ruter.no, made using the API at http://labs.ruter.no/
 
 GNU AFFERO GENERAL PUBLIC LICENSE
 
-Example run of beta 0.5:
+Example run of beta 0.6:
 
 
 Direct hit:
@@ -45,11 +45,11 @@ Flere treff, angi mer nøyaktig:
 Refined search:
 
 ```
-./ruter.py alexander -l 54 -p 2 -n 2
-Avganger fra alexander kiellands plass, oppdatert 12:25
+./ruter.py "aker brygge [båt]" -l B10 -p 1 -n 2
+Avganger fra aker brygge [båt], oppdatert 22:20
 Linje/Destinasjon                 Platform            Full  Tid     Forsinkelse Avvik
-🚌     54 Kjelsås stasjon          2                     0%  12:35   PT179S      -
-🚌     54 Kjelsås stasjon          2                     0%  12:45   -           -
+🚌    B10 Nesoddtangen             1                     0%  22:45   -           -
+⛴    B10 Nesoddtangen             1                     -   23:45   -           -
 ```
 
 TODO:

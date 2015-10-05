@@ -76,24 +76,24 @@ def usage(limitresults = 5):
   print(system_name, 'version', system_version)
   sys.exit(1)
 
-def err(string):
-  sys.stdout.write('%s: Error: %s\n' % (sys.argv[0], string))
-  sys.exit(1)
 
 """ Check if stopsfile exists, download if necessary.
     Read stopsfile, search for stop, return matches as dict """
 def fetch_stops(name_needle, filename = '/tmp/GetStopsRuter.xml'):
   name_needle = name_needle.lower()
-  result = {}
+  results = {}
   start = time.time()
+  status=None
 
   if not os.path.isfile(filename):
-    print("Oversikt over stop mangler (%s), laster ned... " % filename, end="")
+    if verbose:
+      print("Oversikt over stop mangler (%s), laster ned... " % filename, end="")
     request = urllib.request.Request(stopsurl, headers={"Accept" : 'application/xml'})
     with urllib.request.urlopen(request, timeout=10) as response, open(filename, 'wb') as out_file:
       data = response.read() # a `bytes` object
       out_file.write(data)
-    print("ferdig.")
+    if verbose:
+      print("ferdig.")
 
   if verbose:
     print("Parsing stopsfile", filename)
@@ -101,7 +101,7 @@ def fetch_stops(name_needle, filename = '/tmp/GetStopsRuter.xml'):
   try:
     root = ET.parse(filename)
   except ET.ParseError as error:
-    print("Error loading stopsfile"); print(error)
+    print("Error loading stopsfile")
 
   stop = time.time()
   if verbose:
@@ -119,8 +119,9 @@ def fetch_stops(name_needle, filename = '/tmp/GetStopsRuter.xml'):
     if name_needle == stopname:
       if verbose:
         print("Direct hit: %d - %s" % (stopid, stopname))
-      result.clear()
-      result[stopname] = stopid
+      results.clear()
+      results[stopname] = stopid
+      status=1
       break
 
     if re.match(
@@ -128,7 +129,7 @@ def fetch_stops(name_needle, filename = '/tmp/GetStopsRuter.xml'):
       stopname):
       if verbose:
         print("Hit: %d - %s" % (stopid, stopname))
-      result[stopname] = stopid
+      results[stopname] = stopid
 
     # Print progress every 1k stops
     if verbose and counter % 1000 == 0:
@@ -139,10 +140,14 @@ def fetch_stops(name_needle, filename = '/tmp/GetStopsRuter.xml'):
   if verbose:
     print("File searched names in %0.3f ms" % (stop-start))
 
+  status=len(results)
+
   if verbose:
-    print("Results: ", len(result))
-    print(result)
-  return result
+    print("Results: ", status)
+    print(results)
+
+  return results, status
+
 
 """ Fetch xml file from url, return string """
 def fetch_api_xml(url):
@@ -175,40 +180,40 @@ def parse_xml(xml, filename):
 
 
 def get_stopid(stopname):
+  status=None
+  messages=''
+  stopid=None
+
   if verbose:
     print("stopname", stopname)
-
-  stopid=None
 
   ''' Check if we have number or name '''
   if not stopname.isdigit():
     if verbose:
       print("Looking up stopname.")
-    stops = fetch_stops(stopname)
+    stops, stops_status = fetch_stops(stopname)
 
-    if len(stops) > 30:
-      print("%s ga for mange treff, prøv igjen." % stopname)
-      sys.exit(3)
-    elif len(stops) > 1:
-      print("Flere treff, angi mer nøyaktig:")
+    if len(stops) > 1:
+      messages+="Flere treff, angi mer nøyaktig:\n"
+      status=3
       for key in stops:
-        print('[%d] "%s"' % (stops[key], key))
-      sys.exit(3) #Too many hits
+        messages+="[%d] \"%s\" \n" % (stops[key], key)
     elif 0 == len(stops):
-      print("Ingen treff på stoppnavn.")
-      sys.exit(4) #No hits
-
-    selected_stop = list(stops.keys())[0]
-    stopid = stops[selected_stop]
-    print("Avganger fra %s, oppdatert %s" \
-      % (selected_stop, datetime.datetime.now().strftime("%H:%M")))
+      messages+="Ingen treff på stoppnavn."
+      status=4
+    else:
+      selected_stop = list(stops.keys())[0]
+      stopid = stops[selected_stop]
+      messages+="Avganger fra %s, oppdatert %s" \
+      % (selected_stop, datetime.datetime.now().strftime("%H:%M"))
+      status=0
 
   else:
     if verbose:
       print("Looking up stopid.")
     stopid = stopname
 
-  return stopid
+  return stopid, status, messages
 
 
 def get_departures (stopid, localxml=None):
@@ -412,7 +417,11 @@ if __name__ == '__main__':
   else:
     stopname = ''.join(args[0:])
 
-  stopid = get_stopid(stopname)
+  stopid, stopid_status, messages = get_stopid(stopname)
+  print (messages)
+  if 0 < stopid_status:
+    sys.exit(stopid_status)
+
   departures = get_departures(stopid, localxml)
   print (format_departures(departures, limitresults, platform_number, line_number))
 
