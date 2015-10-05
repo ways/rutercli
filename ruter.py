@@ -27,7 +27,7 @@ TransportationType = {
   'ferry': '⛴',
   'rail':  '🚆',
   'tram':  '🚋',
-  'metro': 'Ⓣ', #🚇
+  'metro': '🚃' , #🚇 Ⓣ
 }
 
 TransportationTypeAscii = {
