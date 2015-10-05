@@ -12,19 +12,23 @@ import ruter
 stopname=''
 html = """
 <html>
+<head>
+  <meta name="HandheldFriendly" content="true" />
+  <meta name="viewport" content="width=480, user-scalable=yes" />
+</head>
 <body>
-<pre>%s</pre>
+
+<pre>%s
    <form method="get" action="">
       <p>
-         Stopp: <input type="text" name="stopname">
+         Stopp: <input type="text" name="stopname" value="%s">
          </p>
       <p>
          <input type="submit" value="Submit">
          </p>
       </form>
-   <p>
-      Stopp: %s<br>
-      </p>
+</pre>
+
    </body>
 </html>"""
 
