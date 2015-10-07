@@ -18,21 +18,17 @@ html = """
 </head>
 <body>
 
-<pre>%s
-   <form method="get" action="">
-      <p>
-         Stopp: <input type="text" name="stopname" value="%s">
-         </p>
-      <p>
-         <input type="submit" value="Submit">
-         </p>
-      </form>
+<pre>
+<form method="get" action=""> Stopp: <input type="text" name="stopname" value="%s"> <input type="submit" value="Submit">
+</form>
+%s
 </pre>
 
    </body>
 </html>"""
 
 def application(environ, start_response):
+  ruteroutput=''
 
   # Returns a dictionary containing lists as values.
   d = parse_qs(environ['QUERY_STRING'])
@@ -43,11 +39,20 @@ def application(environ, start_response):
   # Always escape user input to avoid script injection
   stopname = escape(stopname)
 
-  stopid = ruter.get_stopid(stopname)
-  departures = ruter.get_departures(stopid)
-  ruteroutput = ruter.format_departures(departures)
+  if 0 < len(stopname):
+    stopid, status, messages = ruter.get_stopid(stopname)
+    if 0 < len(messages):
+      for line in messages.split('\n'):
+        num_start=line.find('[')
+        num_end=line.find(']')
+        line = line.replace('[', '<a href="/?stopname=' + line[num_start+1:num_end] + '">')
+        line = line.replace(']', '</a>')
+        ruteroutput += line + '\n'
+    if stopid:
+      departures = ruter.get_departures(stopid)
+      ruteroutput = ruter.format_departures(departures)
 
-  response_body = html % (ruteroutput, stopname or 'Empty')
+  response_body = html % (stopname or '', ruteroutput)
 
   status = '200 OK'
 

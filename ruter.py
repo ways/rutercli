@@ -46,7 +46,7 @@ color_codes = {
 
 apiurl='https://reisapi.ruter.no/stopvisit/getdepartures/'
 schema='{http://schemas.datacontract.org/2004/07/Ruter.Reis.Api.Models}'
-stopsfile='GetStopsRuter.xml'
+stopsfile='/tmp/GetStopsRuter.xml'
 stopsurl='http://reisapi.ruter.no/Place/GetStopsRuter'
 verbose=False
 ascii=False
