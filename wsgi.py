@@ -18,14 +18,13 @@ html = """
 </head>
 <body>
 
-<pre>
 <form method="get" action=""> Stopp: <input type="text" name="stopname" value="%s"> <input type="submit" value="Submit">
 </form>
 %s
-</pre>
 
    </body>
-</html>"""
+</html>
+"""
 
 def application(environ, start_response):
   ruteroutput=''
@@ -45,8 +44,8 @@ def application(environ, start_response):
       for line in messages.split('\n'):
         num_start=line.find('[')
         num_end=line.find(']')
-        line = line.replace('[', '<a href="/?stopname=' + line[num_start+1:num_end] + '">')
-        line = line.replace(']', '</a>')
+        line = line.replace('[', '[<a href="/?stopname=' + line[num_start+1:num_end] + '">', 1)
+        line = line.replace(']', '</a>]', 1)
         ruteroutput += line + '\n'
     if stopid:
       departures = ruter.get_departures(stopid)
