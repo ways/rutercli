@@ -53,14 +53,32 @@ Linje/Destinasjon                 Platform            Full  Tid     Forsinkelse 
 ```
 
 TODO:
+* Selectable path for stopsfile
 * Colors for lines
 * One-line interface for status bar
 * Decode delay data
-* Set up as finger/web service?
 * Split core functions to a library.
+* Improve webUI.
 
-One-liner sketches:
+SKETCHES:
+
+One-liner:
 ```
 ./ruter.py vøyenbrua -o -l 28 -p 2
 🚌 28 Fornebu fra vøyenbrua 15:49 (1 min)  15:59 (Kø, 11 min)  16:09 (21 min.)
+```
+
+Separated on platform:
+```
+./ruter.py lijordet -n 2
+Avganger fra lijordet, oppdatert 12:21
+Linje/Destinasjon                 Full  Tid     Forsinkelse Avvik
+
+Platform 1 (Retning sentrum):
+Ⓣ Ⓣ    5 Vestli                     -   12:34   -           -
+Ⓣ Ⓣ    5 Vestli                     -   12:49   -           -
+
+Platform 2 (Retning Østerås):
+Ⓣ Ⓣ    5 Østerås                    -   12:22   PT136S      -
+Ⓣ Ⓣ    5 Østerås                    -   12:37   PT117S      -
 ```
