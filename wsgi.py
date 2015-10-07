@@ -49,7 +49,7 @@ def application(environ, start_response):
         ruteroutput += line + '\n'
     if stopid:
       departures = ruter.get_departures(stopid)
-      ruteroutput = ruter.format_departures(departures)
+      ruteroutput = ruter.htmlformat_departures(departures)
 
   response_body = html % (stopname or '', ruteroutput)
 

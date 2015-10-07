@@ -364,10 +364,11 @@ def format_departures(departures, limitresults=7, platform_number=None, line_num
   return output
 
 
+''' html formatting (ignoring ascii here) '''
 def htmlformat_departures(departures, limitresults=7, platform_number=None, line_number=None):
   if verbose:
     print(departures[0])
-  output="<table><th>Linje/Destinasjon</th><th>Platform</th><th>Full</th><th>Tid</th><th>Forsinkelse</th><th>Avvik</th>"
+  output="<table><tr><th>Linje</th><th>Destinasjon</th><th>Platform</th><th>Full</th><th>Tid</th><th>Forsinkelse</th><th>Avvik</th></tr>"
   directions={}
 
   for counter, departure in enumerate(departures):
@@ -396,17 +397,12 @@ def htmlformat_departures(departures, limitresults=7, platform_number=None, line
     # Start outputting
 
     # Icon, double for long vehicles
-    icon = '<td>{:<4.4}</td>'.format(
-        (TransportationTypeAscii[departure['VehicleMode']]
-          if departure['NumberOfBlockParts'] in [0,1,3]
-          else TransportationTypeAscii[departure['VehicleMode']] + ' ' + TransportationTypeAscii[departure['VehicleMode']] ))
-    if not ascii:
-      icon = '{:<4.4}'.format( 
-        (TransportationType[departure['VehicleMode']]
-          if departure['NumberOfBlockParts'] in [0,1,3]
-          else TransportationType[departure['VehicleMode']] + ' ' + TransportationType[departure['VehicleMode']] ))
+    icon = '{:<4.4}'.format( 
+      (TransportationType[departure['VehicleMode']]
+        if departure['NumberOfBlockParts'] in [0,1,3]
+        else TransportationType[departure['VehicleMode']] + ' ' + TransportationType[departure['VehicleMode']] ))
 
-    outputline += "%s %s %s %s " % (
+    outputline += "<tr><td>%s %s</td><td>%s</td><td>%s</td>" % (
     # Icon for type of transportation
       icon, 
     # Line number, name, platform
@@ -416,16 +412,16 @@ def htmlformat_departures(departures, limitresults=7, platform_number=None, line
     )
 
     # Occupancy
-    outputline += '{:<3.3}%  '.format(departure['OccupancyPercentage'].rjust(3)) if -1 < int(departure['OccupancyPercentage']) else '  -   '
+    outputline += '<td>{:<3.3}%</td>'.format(departure['OccupancyPercentage'].rjust(3)) if -1 < int(departure['OccupancyPercentage']) else '<td>-</td>'
 
     # Time as HH:MM[kø] if today
     if departure['AimedDepartureTime'].day == datetime.date.today().day:
-      outputline += "%s " % ( str(departure['AimedDepartureTime'].strftime("%H:%M")) + ('kø' if 'true' == departure['InCongestion'] else '  ') )
+      outputline += "<td>%s</td>" % ( str(departure['AimedDepartureTime'].strftime("%H:%M")) + ('kø' if 'true' == departure['InCongestion'] else '') )
     else:
-      outputline += "%s" % str(departure['AimedDepartureTime']).ljust(17)
+      outputline += "<td>%s</td>" % str(departure['AimedDepartureTime']).ljust(17)
 
     # Delay
-    outputline += '{:<12.12}'.format(
+    outputline += '<td>{:<12.12}</td>'.format(
       ( departure['Delay'] if (departure['Delay'] and 'PT0S' != departure['Delay']) else '-' )
     )
 
@@ -437,10 +433,7 @@ def htmlformat_departures(departures, limitresults=7, platform_number=None, line
       deviation_formatted = '-'
 
     # Done
-    if not ascii:
-      output += outputline + deviation_formatted + ""
-    else: #TODO: Ugly hack to not care about encoding problems on various platforms yet.
-      output += str(outputline.encode('ascii','ignore')) + "\n"
+    output += outputline + '<td>' + deviation_formatted + '</td></tr>'
 
   return output + '</table>'
 
