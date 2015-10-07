@@ -363,6 +363,89 @@ def format_departures(departures, limitresults=7, platform_number=None, line_num
 
   return output
 
+
+def htmlformat_departures(departures, limitresults=7, platform_number=None, line_number=None):
+  if verbose:
+    print(departures[0])
+  output="<table><th>Linje/Destinasjon</th><th>Platform</th><th>Full</th><th>Tid</th><th>Forsinkelse</th><th>Avvik</th>"
+  directions={}
+
+  for counter, departure in enumerate(departures):
+    outputline=''
+
+    # Limit results by line_number
+    if line_number:
+      if str(line_number) != departure['PublishedLineName']:
+        continue
+
+    # Limit results by platform_number
+    if platform_number:
+      if str(platform_number) != departure['DeparturePlatformName']:
+        continue
+
+    # Keep list of platforms with number of hits
+    if departure['DeparturePlatformName'] not in directions.keys():
+      directions[departure['DeparturePlatformName']] = 1
+    else:
+      directions[departure['DeparturePlatformName']] += 1
+
+    # Limit hits by platform
+    if directions[departure['DeparturePlatformName']] > limitresults:
+      continue
+
+    # Start outputting
+
+    # Icon, double for long vehicles
+    icon = '<td>{:<4.4}</td>'.format(
+        (TransportationTypeAscii[departure['VehicleMode']]
+          if departure['NumberOfBlockParts'] in [0,1,3]
+          else TransportationTypeAscii[departure['VehicleMode']] + ' ' + TransportationTypeAscii[departure['VehicleMode']] ))
+    if not ascii:
+      icon = '{:<4.4}'.format( 
+        (TransportationType[departure['VehicleMode']]
+          if departure['NumberOfBlockParts'] in [0,1,3]
+          else TransportationType[departure['VehicleMode']] + ' ' + TransportationType[departure['VehicleMode']] ))
+
+    outputline += "%s %s %s %s " % (
+    # Icon for type of transportation
+      icon, 
+    # Line number, name, platform
+      '{:<3.3}'.format(departure['PublishedLineName'].rjust(3)),
+      '{:<24.24}'.format(departure['DestinationName']),
+      '{:<19.19}'.format(departure['DeparturePlatformName'])
+    )
+
+    # Occupancy
+    outputline += '{:<3.3}%  '.format(departure['OccupancyPercentage'].rjust(3)) if -1 < int(departure['OccupancyPercentage']) else '  -   '
+
+    # Time as HH:MM[kø] if today
+    if departure['AimedDepartureTime'].day == datetime.date.today().day:
+      outputline += "%s " % ( str(departure['AimedDepartureTime'].strftime("%H:%M")) + ('kø' if 'true' == departure['InCongestion'] else '  ') )
+    else:
+      outputline += "%s" % str(departure['AimedDepartureTime']).ljust(17)
+
+    # Delay
+    outputline += '{:<12.12}'.format(
+      ( departure['Delay'] if (departure['Delay'] and 'PT0S' != departure['Delay']) else '-' )
+    )
+
+    # Deviations
+    deviation_formatted = ''
+    for deviation in departure['Deviations']:
+      deviation_formatted += "(%s) %s " % (deviation, departure['Deviations'][deviation])
+    if '' == deviation_formatted:
+      deviation_formatted = '-'
+
+    # Done
+    if not ascii:
+      output += outputline + deviation_formatted + ""
+    else: #TODO: Ugly hack to not care about encoding problems on various platforms yet.
+      output += str(outputline.encode('ascii','ignore')) + "\n"
+
+  return output + '</table>'
+
+
+
 if __name__ == '__main__':
   stopname=''
   limitresults=7

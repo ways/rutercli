@@ -72,6 +72,7 @@ Separated on platform:
 ```
 ./ruter.py lijordet -n 2
 Avganger fra lijordet, oppdatert 12:21
+
 Linje/Destinasjon                 Full  Tid     Forsinkelse Avvik
 
 Platform 1 (Retning sentrum):
@@ -82,3 +83,4 @@ Platform 2 (Retning Østerås):
 Ⓣ Ⓣ    5 Østerås                    -   12:22   PT136S      -
 Ⓣ Ⓣ    5 Østerås                    -   12:37   PT117S      -
 ```
+
