@@ -19,7 +19,13 @@
 system_version = '0.6'
 system_name = 'ruter.py'
 
-import sys, datetime, time, urllib.request, urllib.error, re, os.path
+import sys
+import datetime
+import time
+import urllib.request
+import urllib.error
+import re
+import os.path
 import xml.etree.ElementTree as ET
 
 TransportationType = {
@@ -27,7 +33,7 @@ TransportationType = {
     'ferry': '⛴',
     'rail':  '🚆',
     'tram':  '🚋',
-    'metro': '🚃' , #🚇 Ⓣ
+    'metro': '🚃',  # 🚇 Ⓣ
 }
 
 TransportationTypeAscii = {
@@ -39,20 +45,21 @@ TransportationTypeAscii = {
 }
 
 # html to terminal safe colors
-#TODO: colors!
+# TODO: colors!
 color_codes = {
     'F07800': 'orange',
 }
 
-apiurl='https://reisapi.ruter.no/stopvisit/getdepartures/'
-schema='{http://schemas.datacontract.org/2004/07/Ruter.Reis.Api.Models}'
-stopsfile='/tmp/GetStopsRuter.xml'
-stopsurl='http://reisapi.ruter.no/Place/GetStopsRuter'
-verbose=False
-ascii=False
-deviations=True
+apiurl = 'https://reisapi.ruter.no/stopvisit/getdepartures/'
+schema = '{http://schemas.datacontract.org/2004/07/Ruter.Reis.Api.Models}'
+stopsfile = '/tmp/GetStopsRuter.xml'
+stopsurl = 'http://reisapi.ruter.no/Place/GetStopsRuter'
+verbose = False
+ascii = False
+deviations = True
 
-def usage(limitresults = 5):
+
+def usage(limitresults=5):
     print('Bruk: %s [-a] [-l] [-n] [-v] <stasjonsnavn|stasjonsid>' % sys.argv[0])
     print('''
     -h       Vis denne hjelpen.
@@ -79,18 +86,20 @@ def usage(limitresults = 5):
 
 """ Check if stopsfile exists, download if necessary.
     Read stopsfile, search for stop, return matches as dict """
-def fetch_stops(name_needle, filename = '/tmp/GetStopsRuter.xml'):
+
+
+def fetch_stops(name_needle, filename='/tmp/GetStopsRuter.xml'):
     name_needle = name_needle.lower()
     results = {}
     start = time.time()
-    status=None
+    status = None
 
     if not os.path.isfile(filename):
         if verbose:
             print("Oversikt over stop mangler (%s), laster ned... " % filename, end="")
-        request = urllib.request.Request(stopsurl, headers={"Accept" : 'application/xml'})
+        request = urllib.request.Request(stopsurl, headers={"Accept": 'application/xml'})
         with urllib.request.urlopen(request, timeout=10) as response, open(filename, 'wb') as out_file:
-            data = response.read() # a `bytes` object
+            data = response.read() #  a `bytes` object
             out_file.write(data)
         if verbose:
             print("ferdig.")
@@ -121,12 +130,12 @@ def fetch_stops(name_needle, filename = '/tmp/GetStopsRuter.xml'):
                 print("Direct hit: %d - %s" % (stopid, stopname))
             results.clear()
             results[stopname] = stopid
-            status=1
+            status = 1
             break
 
         if re.match(
-          name_needle.replace(' ', '').replace('(', '').replace(')', '').replace('-','') + '*',
-          stopname):
+            name_needle.replace(' ', '').replace('(', '').replace(')', '').replace('-', '') + '*',
+                stopname):
             if verbose:
                 print("Hit: %d - %s" % (stopid, stopname))
             results[stopname] = stopid
@@ -140,7 +149,7 @@ def fetch_stops(name_needle, filename = '/tmp/GetStopsRuter.xml'):
     if verbose:
         print("File searched names in %0.3f ms" % (stop-start))
 
-    status=len(results)
+    status = len(results)
 
     if verbose:
         print("Results: ", status)
@@ -150,6 +159,8 @@ def fetch_stops(name_needle, filename = '/tmp/GetStopsRuter.xml'):
 
 
 """ Fetch xml file from url, return string """
+
+
 def fetch_api_xml(url):
     html = None
 
@@ -158,8 +169,8 @@ def fetch_api_xml(url):
         if verbose:
             print("fetch_api_xml", url)
 
-        request = urllib.request.Request(url, headers={"Accept" : 'application/xml'} )
-        html=urllib.request.urlopen(request, timeout=10).read()
+        request = urllib.request.Request(url, headers={"Accept": 'application/xml'})
+        html = urllib.request.urlopen(request, timeout=10).read()
     except urllib.error.HTTPError as error:
         print(url, error)
     except:
@@ -171,18 +182,19 @@ def fetch_api_xml(url):
         print("Data fetched in %0.3f ms" % (stop-start))
     return html
 
+
 def parse_xml(xml, filename):
     if None == xml:
         tree = ET.parse(filename).getroot()
-    else: #None == filename
+    else:  # None == filename
         tree = ET.fromstring(xml)
     return tree
 
 
 def get_stopid(stopname):
-    status=None
-    messages=''
-    stopid=None
+    status = None
+    messages = ''
+    stopid = None
 
     if verbose:
         print("stopname", stopname)
@@ -194,19 +206,19 @@ def get_stopid(stopname):
         stops, stops_status = fetch_stops(stopname)
 
         if len(stops) > 1:
-            messages+="Flere treff, angi mer nøyaktig:\n"
-            status=3
+            messages += "Flere treff, angi mer nøyaktig:\n"
+            status = 3
             for key in stops:
-                messages+="[%d] \"%s\" \n" % (stops[key], key)
+                messages += "[%d] \"%s\" \n" % (stops[key], key)
         elif 0 == len(stops):
-            messages+="Ingen treff på stoppnavn."
-            status=4
+            messages += "Ingen treff på stoppnavn."
+            status = 4
         else:
             selected_stop = list(stops.keys())[0]
             stopid = stops[selected_stop]
-            messages+="Avganger fra %s, oppdatert %s" \
-            % (selected_stop, datetime.datetime.now().strftime("%H:%M"))
-            status=0
+            messages += "Avganger fra %s, oppdatert %s" \
+                % (selected_stop, datetime.datetime.now().strftime("%H:%M"))
+            status = 0
 
     else:
         if verbose:
@@ -216,8 +228,8 @@ def get_stopid(stopname):
     return stopid, status, messages
 
 
-def get_departures (stopid, localxml=None):
-    departures=[]
+def get_departures(stopid, localxml=None):
+    departures = []
 
     xmlroot = None
     if localxml:
@@ -233,7 +245,7 @@ def get_departures (stopid, localxml=None):
         departure={}
 
         MonitoredVehicleJourney = \
-          MonitoredStopVisit.find(schema + 'MonitoredVehicleJourney')
+            MonitoredStopVisit.find(schema + 'MonitoredVehicleJourney')
         departure['DestinationName'] = MonitoredVehicleJourney.find(schema + \
           'DestinationName').text
 
