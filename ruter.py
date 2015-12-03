@@ -286,7 +286,7 @@ def get_departures (stopid, localxml=None):
 def format_departures(departures, limitresults=7, platform_number=None, line_number=None):
   if verbose:
     print(departures[0])
-  output="Linje/Destinasjon                 Platform            Full  Tid     Forsinkelse Avvik\n"
+  output="Linje/Destinasjon                 Platform            Full  Tid (forsink.) Avvik\n"
   directions={}
 
   for counter, departure in enumerate(departures):
@@ -326,10 +326,8 @@ def format_departures(departures, limitresults=7, platform_number=None, line_num
           else TransportationType[departure['VehicleMode']] + ' ' + TransportationType[departure['VehicleMode']] ))
 
     outputline += "%s %s %s %s " % (
-    # Icon for type of transportation
-      icon, 
-    # Line number, name, platform
-      '{:<3.3}'.format(departure['PublishedLineName'].rjust(3)),
+      icon, # Icon for type of transportation
+      '{:<3.3}'.format(departure['PublishedLineName'].rjust(3)), # Line number, name, platform
       '{:<24.24}'.format(departure['DestinationName']),
       '{:<19.19}'.format(departure['DeparturePlatformName'])
     )
@@ -337,16 +335,21 @@ def format_departures(departures, limitresults=7, platform_number=None, line_num
     # Occupancy
     outputline += '{:<3.3}%  '.format(departure['OccupancyPercentage'].rjust(3)) if -1 < int(departure['OccupancyPercentage']) else '  -   '
 
+    # Delay as hour+/-delay_in_minutes
+    delay = ''
+    if departure['Delay'] and 'PT0S' != departure['Delay']:
+      if '+' in departure['Delay']:
+        delay = ' (+' + departure['Delay'][3:-1] + 's)'
+      elif '-' in departure['Delay']:
+        delay = ' (-' + departure['Delay'][3:-1] + 's)'
+
     # Time as HH:MM[kø] if today
     if departure['AimedDepartureTime'].day == datetime.date.today().day:
-      outputline += "%s " % ( str(departure['AimedDepartureTime'].strftime("%H:%M")) + ('kø' if 'true' == departure['InCongestion'] else '  ') )
+      outputline += '{:<15.15}'.format(departure['AimedDepartureTime'].strftime("%H:%M") + \
+                    delay + \
+                    ('kø' if 'true' == departure['InCongestion'] else ''))
     else:
       outputline += "%s" % str(departure['AimedDepartureTime']).ljust(17)
-
-    # Delay
-    outputline += '{:<12.12}'.format(
-      ( departure['Delay'] if (departure['Delay'] and 'PT0S' != departure['Delay']) else '-' )
-    )
 
     # Deviations
     deviation_formatted = ''

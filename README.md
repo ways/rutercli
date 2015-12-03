@@ -84,3 +84,33 @@ Platform 2 (Retning Østerås):
 Ⓣ Ⓣ    5 Østerås                    -   12:37   PT117S      -
 ```
 
+Merging all repeating data:
+```
+ruter.py lijordet 
+Avganger fra lijordet, oppdatert 11:31
+
+Linje/Destinasjon                 Platform
+🚃 🚃    5 Vestli                   1 (Retning sentrum)
+ Full  Tid     Forsinkelse Avvik
+   -   11:34   -           -
+   -   11:44   -           -
+   -   11:49   -           -
+   -   12:04   -           -
+
+🚃 🚃    5 Vestli                   2 (Retning Østerås)
+ Full  Tid     Forsinkelse Avvik
+   -   11:34   -           -
+   -   11:44   -           -
+   -   11:49   -           -
+   -   12:04   -           -
+```
+
+Minimal:
+```
+Avganger fra lijordet, oppdatert 11:31
+Linje/Destinasjon                 Platform
+🚃 🚃    5 Vestli                   1 (Retning sentrum)
+  11:34   11:44+2   11:49    12:04
+🚃 🚃    5 Østerås                  2 (Retning Østerås)
+  11:34   11:44     11:49+1  12:04
+```
