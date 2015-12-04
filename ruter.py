@@ -223,6 +223,7 @@ def get_stopid(stopname):
     else:
         if verbose:
             print("Looking up stopid.")
+        status = 0
         stopid = stopname
 
     return stopid, status, messages
@@ -350,15 +351,20 @@ def format_departures(departures, limitresults=7, platform_number=None, line_num
         # Delay as hour+/-delay_in_minutes
         delay = ''
         if departure['Delay'] and 'PT0S' != departure['Delay']:
-            if '+' in departure['Delay']:
-                delay = ' (+' + departure['Delay'][3:-1] + 's)'
-            elif '-' in departure['Delay']:
+            if '-' in departure['Delay']:
                 delay = ' (-' + departure['Delay'][3:-1] + 's)'
+            else:  # '+' in departure['Delay']:
+                m, s = divmod(int(departure['Delay'][2:-1]), 60)
+                delay = ' (+%s%ss)' % \
+                    (
+                        (('%s' % (m + 'm')) if '' == m else ''),
+                        s
+                    )
 
         # Time as HH:MM[kø] if today
         if departure['AimedDepartureTime'].day == datetime.date.today().day:
             outputline += '{:<15.15}'.format(departure['AimedDepartureTime'].strftime("%H:%M") + \
-                          delay + \
+                          delay +
                           ('kø' if 'true' == departure['InCongestion'] else ''))
         else:
             outputline += "%s" % str(departure['AimedDepartureTime']).ljust(17)
