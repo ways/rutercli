@@ -11,14 +11,21 @@ import ruter
 
 stopname=''
 html = """
-<html>
-<head>
-  <meta name="HandheldFriendly" content="true" />
-  <meta name="viewport" content="width=480, user-scalable=yes" />
+<!DOCTYPE html>
+<html lang="no">
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<title>Alternativ ruter-klient</title>
+		<meta property="og:title" content="Alternativ ruter-klient"/>
+		<meta name="HandheldFriendly" content="true" />
+		<meta name="viewport" content="width=480, user-scalable=yes" />
+		<link rel="apple-touch-icon-precomposed" href="/img/pound-box.png" />
+		<link rel="Shortcut icon" type="image/x-icon" href="/img/pound-box.png"/>
 </head>
 <body>
 
-<form method="get" action=""> Stopp: <input type="text" name="stopname" value="%s"> <input type="submit" value="Submit">
+<form method="get" action=""># Stopp: <input type="text" name="stopname" value="%s"> <input type="submit" value="Submit">
 </form>
 %s
 
@@ -61,4 +68,3 @@ def application(environ, start_response):
   start_response(status, response_headers)
 
   return [response_body.encode("utf-8")]
-

@@ -113,3 +113,5 @@ Linje/Destinasjon                 Platform
 🚃 🚃    5 Østerås                  2 (Retning Østerås)
   11:34   11:44     11:49+1  12:04
 ```
+
+Icon from https://materialdesignicons.com/

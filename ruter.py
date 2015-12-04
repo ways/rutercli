@@ -389,7 +389,7 @@ def format_departures(departures, limitresults=7, platform_number=None, line_num
 def htmlformat_departures(departures, limitresults=7, platform_number=None, line_number=None):
     if verbose:
         print(departures[0])
-    output="<table><tr><th>Linje</th><th>Destinasjon</th><th>Platform</th><th>Full</th><th>Tid</th><th>Forsinkelse</th><th>Avvik</th></tr>"
+    output="<table><tr><th>Linje</th><th>Destinasjon</th><th>Platform</th><th>Full</th><th>Tid (forsinkelse)</th><th>Avvik</th></tr>"
     directions={}
 
     for counter, departure in enumerate(departures):
@@ -435,16 +435,26 @@ def htmlformat_departures(departures, limitresults=7, platform_number=None, line
         # Occupancy
         outputline += '<td>{:<3.3}%</td>'.format(departure['OccupancyPercentage'].rjust(3)) if -1 < int(departure['OccupancyPercentage']) else '<td>-</td>'
 
+        # Delay as hour+/-delay_in_minutes
+        delay = ''
+        if departure['Delay'] and 'PT0S' != departure['Delay']:
+            if '-' in departure['Delay']:
+                delay = ' (-' + departure['Delay'][3:-1] + 's)'
+            else:  # '+' in departure['Delay']:
+                m, s = divmod(int(departure['Delay'][2:-1]), 60)
+                delay = ' (+%s%ss)' % \
+                    (
+                        (('%s' % (m + 'm')) if '' == m else ''),
+                        s
+                    )
+
         # Time as HH:MM[kø] if today
         if departure['AimedDepartureTime'].day == datetime.date.today().day:
-            outputline += "<td>%s</td>" % ( str(departure['AimedDepartureTime'].strftime("%H:%M")) + ('kø' if 'true' == departure['InCongestion'] else '') )
+            outputline += "<td>%s</td>" % ( str(departure['AimedDepartureTime'].strftime("%H:%M")) + \
+                ('kø' if 'true' == departure['InCongestion'] else '') + \
+                delay)
         else:
             outputline += "<td>%s</td>" % str(departure['AimedDepartureTime']).ljust(17)
-
-        # Delay
-        outputline += '<td>{:<12.12}</td>'.format(
-          ( departure['Delay'] if (departure['Delay'] and 'PT0S' != departure['Delay']) else '-' )
-        )
 
         # Deviations
         deviation_formatted = ''
