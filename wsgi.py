@@ -29,42 +29,43 @@ html = """
 </form>
 %s
 
-   </body>
+</body>
 </html>
 """
 
 def application(environ, start_response):
-  ruteroutput=''
+    ruteroutput=''
 
-  # Returns a dictionary containing lists as values.
-  d = parse_qs(environ['QUERY_STRING'])
+    # Returns a dictionary containing lists as values.
+    d = parse_qs(environ['QUERY_STRING'])
 
-  # In this idiom you must issue a list containing a default value.
-  stopname = d.get('stopname', [''])[0] # Returns the first value.
+    # In this idiom you must issue a list containing a default value.
+    stopname = d.get('stopname', [''])[0] # Returns the first value.
 
-  # Always escape user input to avoid script injection
-  stopname = escape(stopname)
+    # Always escape user input to avoid script injection
+    stopname = escape(stopname)
 
-  if 0 < len(stopname):
-    stopid, status, messages = ruter.get_stopid(stopname)
-    if 0 < len(messages):
-      for line in messages.split('\n'):
-        num_start=line.find('[')
-        num_end=line.find(']')
-        line = line.replace('[', '[<a href="/?stopname=' + line[num_start+1:num_end] + '">', 1)
-        line = line.replace(']', '</a>]', 1)
-        ruteroutput += line + '\n'
-    if stopid:
-      departures = ruter.get_departures(stopid)
-      ruteroutput = ruter.htmlformat_departures(departures)
+    if 0 < len(stopname):
+        stopid, status, messages = ruter.get_stopid(stopname)
+        if 0 < len(messages):
+            for line in messages.split('\n'):
 
-  response_body = html % (stopname or '', ruteroutput)
+                num_start=line.find('"')
+                num_end=line.rfind('"')
+                line = line.replace('[', '<br />[<a href="/?stopname=' + line[num_start+1:num_end] + '">', 1)
+                line = line.replace('] ', '</a>] ', 1)
+                ruteroutput += line + '\n'
+        if stopid:
+            departures = ruter.get_departures(stopid)
+            ruteroutput = ruter.htmlformat_departures(departures)
 
-  status = '200 OK'
+    response_body = html % (stopname or '', ruteroutput)
 
-  # Now content type is text/html
-  response_headers = [('Content-Type', 'text/html; charset=utf-8'),
+    status = '200 OK'
+
+    # Now content type is text/html
+    response_headers = [('Content-Type', 'text/html; charset=utf-8'),
                       ('Content-Length', str(len(response_body)))]
-  start_response(status, response_headers)
+    start_response(status, response_headers)
 
-  return [response_body.encode("utf-8")]
+    return [response_body.encode("utf-8")]
