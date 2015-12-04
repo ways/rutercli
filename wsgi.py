@@ -30,6 +30,16 @@ html = """
 </form>
 %s
 
+<p>
+<h3>Examples:</h3>
+
+<ul>
+    <li>[<a href="/?stopname=lijordet">2190080</a>] "lijordet"</li>
+    <li>[<a href="/?stopname=majorstuen [t-bane]">3010200</a>] "majorstuen [t-bane]"</li>
+    <li>[<a href="/?stopname=vøyenbrua">3010407</a>] "vøyenbrua"</li>
+</ul>
+</p>
+
 </body>
 </html>
 """
