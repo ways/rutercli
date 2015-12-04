@@ -24,9 +24,9 @@ html = """
 		<link rel="Shortcut icon" type="image/x-icon" href="http://static.graph.no/favicon.png"/>
         <link rel="shortcut icon" href="http://static.graph.no/favicon.png" />
 </head>
-<body>
+<body style="font-family: monospace;">
 
-<form method="get" action=""># Stopp: <input type="text" name="stopname" value="%s"> <input type="submit" value="Submit">
+<form method="get" action=""><a style="font-size: 3em; text-decoration: none; color: black;" href="http://ruter.graph.no/">#</a> Stopp: <input type="text" name="stopname" value="%s"> <input type="submit" value="Submit">
 </form>
 %s
 
