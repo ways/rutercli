@@ -9,12 +9,12 @@ Direct hit:
 
 ```
 ./ruter.py lijordet -n 2
-Avganger fra lijordet, oppdatert 12:21
-Linje/Destinasjon                 Platform            Full  Tid     Forsinkelse Avvik
-Ⓣ Ⓣ    5 Vestli                   1 (Retning sentrum)   -   12:34   -           -
-Ⓣ Ⓣ    5 Vestli                   1 (Retning sentrum)   -   12:49   -           -
-Ⓣ Ⓣ    5 Østerås                  2 (Retning Østerås)   -   12:22   PT136S      -
-Ⓣ Ⓣ    5 Østerås                  2 (Retning Østerås)   -   12:37   PT117S      -
+Avganger fra lijordet, oppdatert 19:31
+Linje/Destinasjon                 Platform            Full  Tid (forsink.) Avvik
+🚃 🚃    5 Vestli                   1 (Retning sentrum)   -   19:34          -
+🚃 🚃    5 Vestli                   1 (Retning sentrum)   -   19:49          -
+🚃 🚃    5 Østerås                  2 (Retning Østerås)   -   19:37 (+53s)   -
+🚃 🚃    5 Østerås                  2 (Retning Østerås)   -   19:52 (+44s)   -
 ```
 
 Long name:
@@ -56,7 +56,6 @@ TODO:
 * Selectable path for stopsfile
 * Colors for lines
 * One-line interface for status bar
-* Decode delay data
 * Split core functions to a library.
 * Improve webUI.
 
