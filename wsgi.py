@@ -20,8 +20,9 @@ html = """
 		<meta property="og:title" content="Alternativ ruter-klient"/>
 		<meta name="HandheldFriendly" content="true" />
 		<meta name="viewport" content="width=480, user-scalable=yes" />
-		<link rel="apple-touch-icon-precomposed" href="/img/pound-box.png" />
-		<link rel="Shortcut icon" type="image/x-icon" href="/img/pound-box.png"/>
+		<link rel="apple-touch-icon-precomposed" href="/img/favicon.png" />
+		<link rel="Shortcut icon" type="image/x-icon" href="/img/favicon.png"/>
+        <link rel="shortcut icon" href="/img/favicon.png" />
 </head>
 <body>
 
