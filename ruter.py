@@ -270,8 +270,11 @@ def get_departures(stopid, localxml=None):
         departure['InCongestion'] = MonitoredVehicleJourney.find(schema + 'InCongestion').text
 
         departure['OccupancyPercentage'] = -1
-        if 'true' == MonitoredStopVisit.find(schema + 'Extensions').find(schema + 'OccupancyData').find(schema + 'OccupancyAvailable').text:
-            departure['OccupancyPercentage'] = MonitoredStopVisit.find(schema + 'Extensions').find(schema + 'OccupancyData').find(schema + 'OccupancyPercentage').text
+        try:
+          if 'true' == MonitoredStopVisit.find(schema + 'Extensions').find(schema + 'OccupancyData').find(schema + 'OccupancyAvailable').text:
+              departure['OccupancyPercentage'] = MonitoredStopVisit.find(schema + 'Extensions').find(schema + 'OccupancyData').find(schema + 'OccupancyPercentage').text
+        except AttributeError:
+          pass
 
         departure['LineColour'] = MonitoredStopVisit.find(schema + 'Extensions').find(schema + 'LineColour')
         departure['Deviations'] = {}
@@ -511,9 +514,9 @@ if __name__ == '__main__':
         if verbose:
             print("platform_number", platform_number)
 
-    if '-d' in args:
+    if '-t' in args:
         localxml = 'ruter.temp'
-        args.pop(args.index('-l'))
+        args.pop(args.index('-t'))
 
     if '-a' in args:
         ascii = True
