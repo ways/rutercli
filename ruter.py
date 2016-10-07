@@ -333,7 +333,6 @@ def format_departures(departures, limitresults=7, platform_number=None, line_num
             pass
 
         # Limit hits by platform
-        print (directions[departure['DeparturePlatformName']])
         if directions[departure['DeparturePlatformName']] > limitresults:
             continue
 
