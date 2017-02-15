@@ -1,0 +1,3 @@
+Running on a status display in terminator:
+
+DISPLAY=:0 terminator --fullscreen --borderless --command 'while :; do clear; echo ; ~/rutercli/ruter.py -a -n 3 "nydalen [t-bane]"|head -n8; echo ; ~/rutercli/ruter.py -a -n 3 "tamburveien"|head -n8; sleep 60; done'

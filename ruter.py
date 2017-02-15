@@ -391,7 +391,8 @@ def format_departures(departures, limitresults=7, platform_number=None, line_num
         if not ascii:
             output += outputline + deviation_formatted + "\n"
         else: #TODO: Ugly hack to not care about encoding problems on various platforms yet.
-            output += str(outputline.encode('ascii','ignore')) + "\n"
+            #output += str(outputline.encode('ascii','ignore')) + "\n"
+            output += outputline + "\n"
 
     return output
 
