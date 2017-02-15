@@ -58,6 +58,7 @@ TODO:
 * One-line interface for status bar
 * Split core functions to a library.
 * Improve webUI.
+* Show full description of delays (avvik).
 
 SKETCHES:
 

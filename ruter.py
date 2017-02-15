@@ -64,13 +64,13 @@ def usage(limitresults=5):
     print('''
     -h       Vis denne hjelpen.
 
-    -a       ASCII for ikke å bruke Unicode symboler/ikoner.
+    -a       Ikke bruk Unicode symboler/ikoner, kun tekst.
     -d*      Ikke vis avvik. (Ikke implementert enda)
     -l       Begrens treff til kun linje-nummer.
     -n       Begrens treff pr. platform, tilbakefall er %s.
     -o       En-linje-visning.
-    -p       Begrens treff til platform-nummer.
-    -P       Lenge på platformbeskrivelse
+    -p       Begrens treff til platform-navn (må ha hele navnet).
+    -P       Lenge på platformnavn (fra 0 og opp)
     -t       Bruk lokal fil ruter.temp som xml-kilde (kun for utvikling).
     -v       Verbose for utfyllende informasjon.
     ''' % limitresults)
