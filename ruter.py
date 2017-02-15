@@ -251,7 +251,7 @@ def get_stopid(stopname):
             selected_stop = list(stops.keys())[0]
             stopid = stops[selected_stop]
             messages += "Avganger fra %s, oppdatert %s" \
-                % (selected_stop, datetime.datetime.now().strftime("%H:%M"))
+                % (selected_stop, bldwht + datetime.datetime.now().strftime("%H:%M") + txtrst)
             status = 0
 
     else:
@@ -337,18 +337,18 @@ def colormap(line):
     # Map ruter line numbers to terminal safe colors
     if '1' == line:
         return bakcyn
-    elif line in ['2', '33', '60']:
+    elif line in ['2', '18', '19', '33', '60']:
         return bakylw
-    elif line in ['3', '34']:
+    elif line in ['3', '12', '34']:
         return bakpur
     elif line in ['4', '21', '54', '70']:
         return bakblu
-    elif line in ['5', '30']:
+    elif line in ['5', '11', '13', '30']:
         return bakgrn
-    elif line in ['20', '28', '37']:
+    elif line in ['17', '20', '28', '37']:
         return bakred
     else:
-        return ''
+        return txtwht
 
 
 ''' Prepare main output '''
