@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-system_version = '0.7'
+system_version = '0.8'
 system_name = 'ruter.py'
 
 import sys
@@ -65,11 +65,12 @@ def usage(limitresults=5):
     -h       Vis denne hjelpen.
 
     -a       ASCII for ikke å bruke Unicode symboler/ikoner.
-    -d       Ikke vis avvik.
+    -d*      Ikke vis avvik. (Ikke implementert enda)
     -l       Begrens treff til kun linje-nummer.
     -n       Begrens treff pr. platform, tilbakefall er %s.
     -o       En-linje-visning.
     -p       Begrens treff til platform-nummer.
+    -P       Lenge på platformbeskrivelse
     -t       Bruk lokal fil ruter.temp som xml-kilde (kun for utvikling).
     -v       Verbose for utfyllende informasjon.
     ''' % limitresults)
@@ -307,7 +308,10 @@ def get_departures(stopid, localxml=None):
 def format_departures(departures, limitresults=7, platform_number=None, line_number=None, api_latency=None):
     if verbose:
         print(departures[0])
-    output="Linje/Destinasjon                 Platform            Full  Tid (forsink.) Avvik\n"
+
+    output="Linje/Destinasjon                 %s Full  Tid (forsink.) Avvik\n" \
+      % ( '{0:{fill}{align}{width}}'.format('Platform           '[:platform_width], fill=' ', align='<', width=platform_width) )
+
     directions={}
 
     for counter, departure in enumerate(departures):
@@ -349,12 +353,14 @@ def format_departures(departures, limitresults=7, platform_number=None, line_num
                 if departure['NumberOfBlockParts'] in [0,1,3]
                 else TransportationType[departure['VehicleMode']] + ' ' + TransportationType[departure['VehicleMode']] ))
 
-        outputline += "%s %s %s %s " % (
+        outputline += "%s %s %s " % (
           icon, # Icon for type of transportation
-          '{:<3.3}'.format(departure['PublishedLineName'].rjust(3)), # Line number, name, platform
-          '{:<24.24}'.format(departure['DestinationName']),
-          '{:<19.19}'.format(departure['DeparturePlatformName'])
+          '{:<3.3}'.format(departure['PublishedLineName'].rjust(3)), # Line number, name
+          '{:<24.24}'.format(departure['DestinationName'])
         )
+
+        # platform_width
+        outputline += "%s" % ('{0:{fill}{align}{width}}'.format(departure['DeparturePlatformName'][:platform_width], fill=' ', align='<', width=platform_width))
 
         # Occupancy
         outputline += '{:<3.3}%  '.format(departure['OccupancyPercentage'].rjust(3)) if -1 < int(departure['OccupancyPercentage']) else '  -   '
@@ -494,6 +500,7 @@ if __name__ == '__main__':
     output=[]
     line_number=None
     platform_number=None
+    platform_width = 19
     stopid = None
     api_latency = None
 
@@ -529,9 +536,16 @@ if __name__ == '__main__':
         if verbose:
             print("platform_number", platform_number)
 
-    if '-d' in args:
+    if '-P' in args:
+        platform_width = int(args[ args.index('-P')+1 ])
+        args.pop(args.index('-P')+1)
+        args.pop(args.index('-P'))
+        if verbose:
+            print("platform_width", platform_width)
+
+    if '-t' in args:
         localxml = 'ruter.temp'
-        args.pop(args.index('-l'))
+        args.pop(args.index('-t'))
 
     if '-a' in args:
         ascii = True
