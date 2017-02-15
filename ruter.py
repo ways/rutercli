@@ -44,11 +44,40 @@ TransportationTypeAscii = {
     'metro': 'M',
 }
 
-# html to terminal safe colors
-# TODO: colors!
-color_codes = {
-    'F07800': 'orange',
-}
+# Define terminal colors
+txtblk='\033[0;30m' # Black - Regular
+txtred='\033[0;31m' # Red
+txtgrn='\033[0;32m' # Green
+txtylw='\033[0;33m' # Yellow
+txtblu='\033[0;34m' # Blue
+txtpur='\033[0;35m' # Purple
+txtcyn='\033[0;36m' # Cyan
+txtwht='\033[0;37m' # White
+bldblk='\033[1;30m' # Black - Bold
+bldred='\033[1;31m' # Red
+bldgrn='\033[1;32m' # Green
+bldylw='\033[1;33m' # Yellow
+bldblu='\033[1;34m' # Blue
+bldpur='\033[1;35m' # Purple
+bldcyn='\033[1;36m' # Cyan
+bldwht='\033[1;37m' # White
+unkblk='\033[4;30m' # Black - Underline
+undred='\033[4;31m' # Red
+undgrn='\033[4;32m' # Green
+undylw='\033[4;33m' # Yellow
+undblu='\033[4;34m' # Blue
+undpur='\033[4;35m' # Purple
+undcyn='\033[4;36m' # Cyan
+undwht='\033[4;37m' # White
+bakblk='\033[40m'   # Black - Background
+bakred='\033[41m'   # Red
+bakgrn='\033[42m'   # Green
+bakylw='\033[43m' #'\033[43m'   # Yellow
+bakblu='\033[44m'   # Blue
+bakpur='\033[45m'   # Purple
+bakcyn='\033[46m'   # Cyan
+bakwht='\033[47m'   # White
+txtrst='\033[0m'    # Text Reset
 
 apiurl = 'https://reisapi.ruter.no/stopvisit/getdepartures/'
 schema = '{http://schemas.datacontract.org/2004/07/Ruter.Reis.Api.Models}'
@@ -65,6 +94,7 @@ def usage(limitresults=5):
     -h       Vis denne hjelpen.
 
     -a       Ikke bruk Unicode symboler/ikoner, kun tekst.
+    -c       Deaktiver linjefarger.
     -d*      Ikke vis avvik. (Ikke implementert enda)
     -l       Begrens treff til kun linje-nummer.
     -n       Begrens treff pr. platform, tilbakefall er %s.
@@ -303,6 +333,23 @@ def get_departures(stopid, localxml=None):
     # Sort departures by platform name
     return sorted(departures, key=lambda k: k['DeparturePlatformName']), api_latency
 
+def colormap(line):
+    # Map ruter line numbers to terminal safe colors
+    if '1' == line:
+        return bakcyn
+    elif line in ['2', '33', '60']:
+        return bakylw
+    elif line in ['3', '34']:
+        return bakpur
+    elif line in ['4', '21', '54', '70']:
+        return bakblu
+    elif line in ['5', '30']:
+        return bakgrn
+    elif line in ['20', '28', '37']:
+        return bakred
+    else:
+        return ''
+
 
 ''' Prepare main output '''
 def format_departures(departures, limitresults=7, platform_number=None, line_number=None, api_latency=None):
@@ -346,16 +393,21 @@ def format_departures(departures, limitresults=7, platform_number=None, line_num
         icon = '{:<4.4}'.format(
             (TransportationTypeAscii[departure['VehicleMode']]
               if departure['NumberOfBlockParts'] in [0,1,3]
-              else TransportationTypeAscii[departure['VehicleMode']] + ' ' + TransportationTypeAscii[departure['VehicleMode']] ))
+              else TransportationTypeAscii[departure['VehicleMode']] + TransportationTypeAscii[departure['VehicleMode']] ))
         if not ascii:
             icon = '{:<4.4}'.format(
               (TransportationType[departure['VehicleMode']]
                 if departure['NumberOfBlockParts'] in [0,1,3]
                 else TransportationType[departure['VehicleMode']] + ' ' + TransportationType[departure['VehicleMode']] ))
 
-        outputline += "%s %s %s " % (
+        line_name = departure['PublishedLineName']
+        if showColors:
+            line_name = "%s%s %s %s" % (txtblk, colormap(line_name), departure['PublishedLineName'], txtrst)
+
+        outputline += "%s %s %s %s " % (
           icon, # Icon for type of transportation
-          '{:<3.3}'.format(departure['PublishedLineName'].rjust(3)), # Line number, name
+          line_name, # Line number, name
+          txtrst,
           '{:<24.24}'.format(departure['DestinationName'])
         )
 
@@ -503,6 +555,7 @@ if __name__ == '__main__':
     platform_width = 19
     stopid = None
     api_latency = None
+    showColors = True
 
     args = sys.argv[1:]
 
@@ -550,6 +603,10 @@ if __name__ == '__main__':
     if '-a' in args:
         ascii = True
         args.pop(args.index('-a'))
+
+    if '-c' in args:
+        showColors = False
+        args.pop(args.index('-c'))
 
     if len(args) < 1:
         usage(limitresults)
