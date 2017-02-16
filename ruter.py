@@ -108,10 +108,7 @@ def usage(limitresults=5):
     for icon in TransportationType:
         print (icon, TransportationType[icon])
 
-    for color_code in color_codes:
-        print (color_code, color_codes[color_code])
-
-    print(system_name, 'version', system_version)
+    print(system_name, txtblu + 'version' + txtrst, system_version)
     sys.exit(1)
 
 
