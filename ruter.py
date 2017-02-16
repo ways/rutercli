@@ -349,15 +349,20 @@ def colormap(line):
 
 
 ''' Prepare main output '''
-def format_departures(departures, limitresults=7, platform_number=None, line_number=None, api_latency=None):
+def format_departures(departures, limitresults=7, platform_number=None,
+    line_number=None, api_latency=None):
+    
     if verbose:
         print(departures[0])
 
+    # Header
     output="Linje/Destinasjon                 %s Full  Tid (forsink.) Avvik\n" \
-      % ( '{0:{fill}{align}{width}}'.format('Platform           '[:platform_width], fill=' ', align='<', width=platform_width) )
+        % ( '{0:{fill}{align}{width}}'.format('Platform           '[:platform_width],
+        fill=' ', align='<', width=platform_width) )
 
     directions={}
-
+    last_direction=None
+    
     for counter, departure in enumerate(departures):
         outputline=''
 
@@ -384,7 +389,12 @@ def format_departures(departures, limitresults=7, platform_number=None, line_num
         if directions[departure['DeparturePlatformName']] > limitresults:
             continue
 
-        # Start outputting
+        # Add a newline when switching platforms
+        if last_direction and last_direction != departure['DeparturePlatformName']:
+            output += "\n"
+        last_direction=departure['DeparturePlatformName']
+
+        ### Start outputting
 
         # Icon, double for long vehicles
         icon = '{:<4.4}'.format(
@@ -445,8 +455,7 @@ def format_departures(departures, limitresults=7, platform_number=None, line_num
         # Done
         if not ascii:
             output += outputline + deviation_formatted + "\n"
-        else: #TODO: Ugly hack to not care about encoding problems on various platforms yet.
-            #output += str(outputline.encode('ascii','ignore')) + "\n"
+        else:
             output += outputline + "\n"
 
     return output
