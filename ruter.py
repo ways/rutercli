@@ -402,16 +402,16 @@ def format_departures(departures, limitresults=7, platform_number=None,
               if departure['NumberOfBlockParts'] in [0,1,3]
               else TransportationTypeAscii[departure['VehicleMode']] + TransportationTypeAscii[departure['VehicleMode']] ))
         if not ascii:
-            icon = '{:<4.4}'.format(
-              (TransportationType[departure['VehicleMode']]
+            icon = '{0:{fill}{align}{width}}'.format(
+              (TransportationType[departure['VehicleMode']] + '  '
                 if departure['NumberOfBlockParts'] in [0,1,3]
-                else TransportationType[departure['VehicleMode']] + ' ' + TransportationType[departure['VehicleMode']] ))
+                else TransportationType[departure['VehicleMode']] + TransportationType[departure['VehicleMode']] ), fill='X', align='<', width=2)
 
         line_name = departure['PublishedLineName']
         if showColors:
             line_name = "%s%s %s %s" % (txtblk, colormap(line_name), departure['PublishedLineName'], txtrst)
 
-        outputline += "%s %s %s %s " % (
+        outputline += "%s%s %s %s " % (
           icon, # Icon for type of transportation
           line_name, # Line number, name
           txtrst,
