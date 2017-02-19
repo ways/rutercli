@@ -453,11 +453,7 @@ def format_departures(departures, limitresults=7, platform_number=None,
             deviation_formatted = '-'
 
         # Done
-        if not ascii:
-            output += outputline + deviation_formatted + "\n"
-        else:
-            output += outputline + "\n"
-
+        output += outputline + deviation_formatted + "\n"
     return output
 
 
