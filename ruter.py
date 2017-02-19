@@ -452,6 +452,12 @@ def format_departures(departures, limitresults=7, platform_number=None,
         if '' == deviation_formatted:
             deviation_formatted = '-'
 
+# TODO:
+# Look up deviation info:
+# sx/GetSituation/{situationNumber}
+# http://sirisx.ruter.no/help
+# i.e. http://sirisx.ruter.no/sx/GetSituation/42693
+
         # Done
         output += outputline + deviation_formatted + "\n"
     return output
