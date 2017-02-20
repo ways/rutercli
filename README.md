@@ -2,9 +2,13 @@ A python3 client for ruter.no, made using the API at http://labs.ruter.no/
 
 This client depends on the [tabulate](https://pypi.python.org/pypi/tabulate)
 Python package. To install it, run
-`python -m pip install -r requirements.txt`
-or for legacy versions of Python:
-`pip install -r requirements.txt`
+```
+python -m pip install -r requirements.txt
+```
+or, for legacy versions of Python:
+```
+pip install -r requirements.txt
+```
 
 GNU AFFERO GENERAL PUBLIC LICENSE
 
