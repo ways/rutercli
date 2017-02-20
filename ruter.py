@@ -414,7 +414,10 @@ def format_departures(departures, deviations, journey, limitresults=7,
 
         # Limit results by platform_prefix
         if platform_prefix:
-            if not departure['DeparturePlatformName'].startswith(str(platform_prefix)):
+            if platform_prefix.endswith('$'):
+                if departure['DeparturePlatformName'] != platform_prefix[:-1]:
+                    continue
+            elif not departure['DeparturePlatformName'].startswith(str(platform_prefix)):
                 continue
 
         # Keep list of platforms with number of hits
@@ -522,7 +525,10 @@ def htmlformat_departures(departures, deviations, journey, limitresults=7,
 
         # Limit results by platform_prefix
         if platform_prefix:
-            if not departure['DeparturePlatformName'].startswith(str(platform_prefix)):
+            if platform_prefix.endswith('$'):
+                if departure['DeparturePlatformName'] != platform_prefix[:-1]:
+                    continue
+            elif not departure['DeparturePlatformName'].startswith(str(platform_prefix)):
                 continue
 
         # Keep list of platforms with number of hits
