@@ -91,7 +91,7 @@ deviations = True
 journey = False
 
 
-def usage(limitresults=5):
+def usage(limitresults=7):
     print('Bruk: %s [-a] [-l] [-n] [-v] <stasjonsnavn|stasjonsid>' % sys.argv[0])
     print('''
     -h       Vis denne hjelpen.
@@ -386,29 +386,12 @@ def colormap(line):
     else:
         return txtwht
 
-''' Prepare main output '''
-def format_departures(departures, deviations, journey, limitresults=7,
-    platform_prefix = None, line_number=None, api_latency=None):
-
-    if verbose:
-        print(departures[0])
-
-    # Header
-    output="Linje/Destinasjon                 %s Full Tid (forsink.)" \
-        % ( '{0:{fill}{align}{width}}'.format('Platform           '[:platform_width],
-        fill=' ', align='<', width=platform_width) )
-
-    if journey:
-        output+= " Turnummer   "
-    if deviations:
-        output+= " Avvik"
-    output+="\n"
-    directions={}
-    last_direction=None
+''' Filter lines '''
+def filter_departures(departures, limitresults=7, platform_prefix=None, line_number=None):
+    filtered = []
+    directions = {}
 
     for counter, departure in enumerate(departures):
-        outputline=''
-
         # Limit results by line_number
         if line_number:
             if departure['PublishedLineName'] not in line_number:
@@ -434,6 +417,30 @@ def format_departures(departures, deviations, journey, limitresults=7,
         # Limit hits by platform
         if directions[departure['DeparturePlatformName']] > limitresults:
             continue
+        filtered.append(departure)
+    return filtered
+
+
+''' Prepare main output '''
+def format_departures(departures, deviations, journey, api_latency=None):
+
+    if verbose:
+        print(departures[0])
+
+    # Header
+    output="Linje/Destinasjon                 %s Full Tid (forsink.)" \
+        % ( '{0:{fill}{align}{width}}'.format('Platform           '[:platform_width],
+        fill=' ', align='<', width=platform_width) )
+
+    if journey:
+        output+= " Turnummer   "
+    if deviations:
+        output+= " Avvik"
+    output+="\n"
+    last_direction=None
+
+    for counter, departure in enumerate(departures):
+        outputline=''
 
         # Add a newline when switching platforms
         if last_direction and last_direction != departure['DeparturePlatformName']:
@@ -504,8 +511,7 @@ def format_departures(departures, deviations, journey, limitresults=7,
 
 
 ''' html formatting (ignoring ascii here) '''
-def htmlformat_departures(departures, deviations, journey, limitresults=7,
-    platform_prefix=None, line_number=None, api_latency=None):
+def htmlformat_departures(departures, deviations, journey, api_latency=None):
     if verbose:
         print(departures[0])
     output="<table><tr><th>Linje</th><th>Destinasjon</th><th>Platform</th><th>Full</th><th>Tid (forsinkelse)</th>"
@@ -515,38 +521,8 @@ def htmlformat_departures(departures, deviations, journey, limitresults=7,
         output+="<th>Avvik</th>"
     output+="</tr>"
 
-    directions={}
-
     for counter, departure in enumerate(departures):
         outputline=''
-
-        # Limit results by line_number
-        if line_number:
-            if departure['PublishedLineName'] not in line_number:
-                continue
-
-        # Limit results by platform_prefix
-        if platform_prefix:
-            if platform_prefix.endswith('$'):
-                if departure['DeparturePlatformName'] != platform_prefix[:-1]:
-                    continue
-            elif not departure['DeparturePlatformName'].startswith(str(platform_prefix)):
-                continue
-
-        # Keep list of platforms with number of hits
-        try:
-            if departure['DeparturePlatformName'] not in directions.keys():
-                directions[departure['DeparturePlatformName']] = 1
-            else:
-                directions[departure['DeparturePlatformName']] += 1
-        except TypeError:
-            pass
-
-        # Limit hits by platform
-        #try:
-        if directions[departure['DeparturePlatformName']] > limitresults:
-            outputline += '<tr></tr>';
-            continue
 
         # Start outputting
 
@@ -679,7 +655,8 @@ if __name__ == '__main__':
         sys.exit(stopid_status)
 
     departures, api_latency = get_departures(stopid, localxml)
-    print (format_departures(departures, deviations, journey, limitresults, platform_prefix, line_number, api_latency))
+    departures = filter_departures(departures, limitresults, platform_prefix, line_number)
+    print (format_departures(departures, deviations, journey, api_latency))
     print ('Waited %0.3f s for ruter.no to respond' % api_latency)
 
     sys.exit(0)
