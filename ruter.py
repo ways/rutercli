@@ -86,6 +86,7 @@ stopsurl = 'http://reisapi.ruter.no/Place/GetStopsRuter'
 verbose = False
 ascii = False
 deviations = True
+journey = False
 
 
 def usage(limitresults=5):
@@ -95,11 +96,13 @@ def usage(limitresults=5):
 
     -a       Ikke bruk Unicode symboler/ikoner, kun tekst.
     -c       Deaktiver linjefarger.
-    -d*      Ikke vis avvik. (Ikke implementert enda)
-    -l       Begrens treff til kun linje-nummer.
+    -d       Ikke vis avvik.
+    -j       Vis turnummer.
+    -l       Begrens treff til kun linje-nummer (kommaseparert).
     -n       Begrens treff pr. platform, tilbakefall er %s.
     -o       En-linje-visning.
     -p       Begrens treff til platform-navn (må ha hele navnet).
+    -pp      Begrens treff til platform-nummer (prefix).
     -P       Lenge på platformnavn (fra 0 og opp)
     -t       Bruk lokal fil ruter.temp som xml-kilde (kun for utvikling).
     -v       Verbose for utfyllende informasjon.
@@ -262,7 +265,7 @@ def get_stopid(stopname):
 
 def get_departures(stopid, localxml=None):
     departures = []
-    api_latency = None 
+    api_latency = None
 
     xmlroot = None
     if localxml:
@@ -325,10 +328,45 @@ def get_departures(stopid, localxml=None):
         except NameError:
             pass
 
+        # Journey name
+        departure['VehicleJourneyName'] = MonitoredVehicleJourney.find(schema + 'VehicleJourneyName').text
         departures.append(departure)
 
     # Sort departures by platform name
     return sorted(departures, key=lambda k: k['DeparturePlatformName']), api_latency
+
+# Example patterns:
+# PT0S -PT140S PT6M0S
+
+delay_pattern_s = re.compile("(-?)PT(\d+)S")
+delay_pattern_ms = re.compile("(-?)PT(\d+)M(\d+)S")
+
+def format_delay(delay):
+    if not delay:
+        return ""
+    match_s = delay_pattern_s.match(delay)
+    match_ms = delay_pattern_ms.match(delay)
+    negative = False
+    if match_s:
+        seconds = int(match_s.group(2))
+        negative = match_s.group(1) == '-'
+    elif match_ms:
+        seconds = 60*int(match_ms.group(2)) + int(match_ms.group(3))
+        negative = match_ms.group(1) == '-'
+    else:
+        return ''
+    m = s = 0
+    if seconds != 0:
+        m, s = divmod(seconds, 60)
+
+    formatted = ' ('
+    if negative:
+        formatted += '-'
+    if m != 0:
+        formatted += '%sm' % m
+    formatted += '%ss' % s
+    formatted += ')'
+    return formatted
 
 def colormap(line):
     # Map ruter line numbers to terminal safe colors
@@ -347,33 +385,42 @@ def colormap(line):
     else:
         return txtwht
 
-
 ''' Prepare main output '''
-def format_departures(departures, limitresults=7, platform_number=None,
-    line_number=None, api_latency=None):
-    
+def format_departures(departures, deviations, journey, limitresults=7, platform_number=None,
+    platform_number_prefix = None, line_number=None, api_latency=None):
+
     if verbose:
         print(departures[0])
 
     # Header
-    output="Linje/Destinasjon                 %s Full  Tid (forsink.) Avvik\n" \
+    output="Linje/Destinasjon               %s Full Tid (forsink.)" \
         % ( '{0:{fill}{align}{width}}'.format('Platform           '[:platform_width],
         fill=' ', align='<', width=platform_width) )
 
+    if journey:
+        output+= " Turnummer   "
+    if deviations:
+        output+= " Avvik"
+    output+="\n"
     directions={}
     last_direction=None
-    
+
     for counter, departure in enumerate(departures):
         outputline=''
 
         # Limit results by line_number
         if line_number:
-            if str(line_number) != departure['PublishedLineName']:
+            if departure['PublishedLineName'] not in line_number:
                 continue
 
         # Limit results by platform_number
         if platform_number:
             if str(platform_number) != departure['DeparturePlatformName']:
+                continue
+
+        # Limit results by platform_number_prefix
+        if platform_number_prefix:
+            if not departure['DeparturePlatformName'].startswith(str(platform_number_prefix)):
                 continue
 
         # Keep list of platforms with number of hits
@@ -424,18 +471,7 @@ def format_departures(departures, limitresults=7, platform_number=None,
         # Occupancy
         outputline += '{:<3.3}%  '.format(departure['OccupancyPercentage'].rjust(3)) if -1 < int(departure['OccupancyPercentage']) else '  -   '
 
-        # Delay as hour+/-delay_in_minutes
-        delay = ''
-        if departure['Delay'] and 'PT0S' != departure['Delay']:
-            if '-' in departure['Delay']:
-                delay = ' (-' + departure['Delay'][3:-1] + 's)'
-            else:  # '+' in departure['Delay']:
-                m, s = divmod(int(departure['Delay'][2:-1]), 60)
-                delay = ' (+%s%ss)' % \
-                    (
-                        (('%s' % (m + 'm')) if '' == m else ''),
-                        s
-                    )
+        delay = format_delay(departure['Delay'])
 
         # Time as HH:MM[kø] if today
         if departure['AimedDepartureTime'].day == datetime.date.today().day:
@@ -445,12 +481,17 @@ def format_departures(departures, limitresults=7, platform_number=None,
         else:
             outputline += "%s" % str(departure['AimedDepartureTime']).ljust(17)
 
+        # Journey
+        if journey:
+            outputline += "%s" % str(departure['VehicleJourneyName']).ljust(13)
+
         # Deviations
         deviation_formatted = ''
-        for deviation in departure['Deviations']:
-            deviation_formatted += "(%s) %s " % (deviation, departure['Deviations'][deviation])
-        if '' == deviation_formatted:
-            deviation_formatted = '-'
+        if deviations:
+            for deviation in departure['Deviations']:
+                deviation_formatted += "(%s) %s " % (deviation, departure['Deviations'][deviation])
+            if '' == deviation_formatted:
+                deviation_formatted = '-'
 
 # TODO:
 # Look up deviation info:
@@ -464,10 +505,16 @@ def format_departures(departures, limitresults=7, platform_number=None,
 
 
 ''' html formatting (ignoring ascii here) '''
-def htmlformat_departures(departures, limitresults=7, platform_number=None, line_number=None, api_latency=None):
+def htmlformat_departures(departures, deviations, journey, limitresults=7, platform_number=None, platform_number_prefix=None, line_number=None, api_latency=None):
     if verbose:
         print(departures[0])
-    output="<table><tr><th>Linje</th><th>Destinasjon</th><th>Platform</th><th>Full</th><th>Tid (forsinkelse)</th><th>Avvik</th></tr>"
+    output="<table><tr><th>Linje</th><th>Destinasjon</th><th>Platform</th><th>Full</th><th>Tid (forsinkelse)</th>"
+    if journey:
+        output+="<th>Turnummer</th>"
+    if deviations:
+        output+="<th>Avvik</th>"
+    output+="</tr>"
+
     directions={}
 
     for counter, departure in enumerate(departures):
@@ -475,12 +522,17 @@ def htmlformat_departures(departures, limitresults=7, platform_number=None, line
 
         # Limit results by line_number
         if line_number:
-            if str(line_number) != departure['PublishedLineName']:
+            if departure['PublishedLineName'] not in line_number:
                 continue
 
         # Limit results by platform_number
         if platform_number:
             if str(platform_number) != departure['DeparturePlatformName']:
+                continue
+
+        # Limit results by platform_number_prefix
+        if platform_number_prefix:
+            if not departure['DeparturePlatformName'].startswith(str(platform_number_prefix)):
                 continue
 
         # Keep list of platforms with number of hits
@@ -518,18 +570,7 @@ def htmlformat_departures(departures, limitresults=7, platform_number=None, line
         # Occupancy
         outputline += '<td>{:<3.3}%</td>'.format(departure['OccupancyPercentage'].rjust(3)) if -1 < int(departure['OccupancyPercentage']) else '<td>-</td>'
 
-        # Delay as hour+/-delay_in_minutes
-        delay = ''
-        if departure['Delay'] and 'PT0S' != departure['Delay']:
-            if '-' in departure['Delay']:
-                delay = ' (-' + departure['Delay'][3:-1] + 's)'
-            else:  # '+' in departure['Delay']:
-                m, s = divmod(int(departure['Delay'][2:-1]), 60)
-                delay = ' (+%s%ss)' % \
-                    (
-                        (('%s' % (m + 'm')) if '' == m else ''),
-                        s
-                    )
+        delay = format_delay(departure['Delay'])
 
         # Time as HH:MM[kø] if today
         if departure['AimedDepartureTime'].day == datetime.date.today().day:
@@ -539,12 +580,17 @@ def htmlformat_departures(departures, limitresults=7, platform_number=None, line
         else:
             outputline += "<td>%s</td>" % str(departure['AimedDepartureTime']).ljust(17)
 
+        # Journey
+        if journey:
+            outputline += "<td>%s</td>" % str(departure['VehicleJourneyName']).ljust(13)
+
         # Deviations
         deviation_formatted = ''
-        for deviation in departure['Deviations']:
-            deviation_formatted += "(%s) %s " % (deviation, departure['Deviations'][deviation])
-        if '' == deviation_formatted:
-            deviation_formatted = '-'
+        if deviations:
+            for deviation in departure['Deviations']:
+                deviation_formatted += "(%s) %s " % (deviation, departure['Deviations'][deviation])
+            if '' == deviation_formatted:
+                deviation_formatted = '-'
 
         # Done
         output += outputline + '<td>' + deviation_formatted + '</td></tr>'
@@ -560,6 +606,7 @@ if __name__ == '__main__':
     output=[]
     line_number=None
     platform_number=None
+    platform_number_prefix=None
     platform_width = 19
     stopid = None
     api_latency = None
@@ -584,7 +631,7 @@ if __name__ == '__main__':
             print(args, stopname)
 
     if '-l' in args:
-        line_number = args[ args.index('-l')+1 ]
+        line_number = args[ args.index('-l')+1 ].split(",")
         args.pop(args.index('-l')+1)
         args.pop(args.index('-l'))
         if verbose:
@@ -597,6 +644,13 @@ if __name__ == '__main__':
         if verbose:
             print("platform_number", platform_number)
 
+    if '-pp' in args:
+        platform_number_prefix = args[ args.index('-pp')+1 ]
+        args.pop(args.index('-pp')+1)
+        args.pop(args.index('-pp'))
+        if verbose:
+            print("platform_number_prefix", platform_number_prefix)
+
     if '-P' in args:
         platform_width = int(args[ args.index('-P')+1 ])
         args.pop(args.index('-P')+1)
@@ -607,6 +661,14 @@ if __name__ == '__main__':
     if '-t' in args:
         localxml = 'ruter.temp'
         args.pop(args.index('-t'))
+
+    if '-d' in args:
+        deviations = False
+        args.pop(args.index('-d'))
+
+    if '-j' in args:
+        journey = True
+        args.pop(args.index('-j'))
 
     if '-a' in args:
         ascii = True
@@ -627,7 +689,7 @@ if __name__ == '__main__':
         sys.exit(stopid_status)
 
     departures, api_latency = get_departures(stopid, localxml)
-    print (format_departures(departures, limitresults, platform_number, line_number, api_latency))
+    print (format_departures(departures, deviations, journey, limitresults, platform_number, platform_number_prefix, line_number, api_latency))
     print ('Waited %0.3f s for ruter.no to respond' % api_latency)
 
     sys.exit(0)
