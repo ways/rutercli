@@ -101,8 +101,7 @@ def usage(limitresults=5):
     -l       Begrens treff til kun linje-nummer (kommaseparert).
     -n       Begrens treff pr. platform, tilbakefall er %s.
     -o       En-linje-visning.
-    -p       Begrens treff til platform-navn (må ha hele navnet).
-    -pp      Begrens treff til platform-nummer (prefix).
+    -p       Begrens treff til platform-navn (prefix).
     -P       Lenge på platformnavn (fra 0 og opp)
     -t       Bruk lokal fil ruter.temp som xml-kilde (kun for utvikling).
     -v       Verbose for utfyllende informasjon.
@@ -386,14 +385,14 @@ def colormap(line):
         return txtwht
 
 ''' Prepare main output '''
-def format_departures(departures, deviations, journey, limitresults=7, platform_number=None,
-    platform_number_prefix = None, line_number=None, api_latency=None):
+def format_departures(departures, deviations, journey, limitresults=7,
+    platform_prefix = None, line_number=None, api_latency=None):
 
     if verbose:
         print(departures[0])
 
     # Header
-    output="Linje/Destinasjon               %s Full Tid (forsink.)" \
+    output="Linje/Destinasjon                 %s Full Tid (forsink.)" \
         % ( '{0:{fill}{align}{width}}'.format('Platform           '[:platform_width],
         fill=' ', align='<', width=platform_width) )
 
@@ -413,14 +412,9 @@ def format_departures(departures, deviations, journey, limitresults=7, platform_
             if departure['PublishedLineName'] not in line_number:
                 continue
 
-        # Limit results by platform_number
-        if platform_number:
-            if str(platform_number) != departure['DeparturePlatformName']:
-                continue
-
-        # Limit results by platform_number_prefix
-        if platform_number_prefix:
-            if not departure['DeparturePlatformName'].startswith(str(platform_number_prefix)):
+        # Limit results by platform_prefix
+        if platform_prefix:
+            if not departure['DeparturePlatformName'].startswith(str(platform_prefix)):
                 continue
 
         # Keep list of platforms with number of hits
@@ -505,7 +499,8 @@ def format_departures(departures, deviations, journey, limitresults=7, platform_
 
 
 ''' html formatting (ignoring ascii here) '''
-def htmlformat_departures(departures, deviations, journey, limitresults=7, platform_number=None, platform_number_prefix=None, line_number=None, api_latency=None):
+def htmlformat_departures(departures, deviations, journey, limitresults=7,
+    platform_prefix=None, line_number=None, api_latency=None):
     if verbose:
         print(departures[0])
     output="<table><tr><th>Linje</th><th>Destinasjon</th><th>Platform</th><th>Full</th><th>Tid (forsinkelse)</th>"
@@ -525,14 +520,9 @@ def htmlformat_departures(departures, deviations, journey, limitresults=7, platf
             if departure['PublishedLineName'] not in line_number:
                 continue
 
-        # Limit results by platform_number
-        if platform_number:
-            if str(platform_number) != departure['DeparturePlatformName']:
-                continue
-
-        # Limit results by platform_number_prefix
-        if platform_number_prefix:
-            if not departure['DeparturePlatformName'].startswith(str(platform_number_prefix)):
+        # Limit results by platform_prefix
+        if platform_prefix:
+            if not departure['DeparturePlatformName'].startswith(str(platform_prefix)):
                 continue
 
         # Keep list of platforms with number of hits
@@ -605,8 +595,7 @@ if __name__ == '__main__':
     localxml=None
     output=[]
     line_number=None
-    platform_number=None
-    platform_number_prefix=None
+    platform_prefix=None
     platform_width = 19
     stopid = None
     api_latency = None
@@ -638,18 +627,11 @@ if __name__ == '__main__':
             print("line_number", line_number)
 
     if '-p' in args:
-        platform_number = args[ args.index('-p')+1 ]
+        platform_prefix = args[ args.index('-p')+1 ]
         args.pop(args.index('-p')+1)
         args.pop(args.index('-p'))
         if verbose:
-            print("platform_number", platform_number)
-
-    if '-pp' in args:
-        platform_number_prefix = args[ args.index('-pp')+1 ]
-        args.pop(args.index('-pp')+1)
-        args.pop(args.index('-pp'))
-        if verbose:
-            print("platform_number_prefix", platform_number_prefix)
+            print("platform_prefix", platform_prefix)
 
     if '-P' in args:
         platform_width = int(args[ args.index('-P')+1 ])
@@ -689,7 +671,7 @@ if __name__ == '__main__':
         sys.exit(stopid_status)
 
     departures, api_latency = get_departures(stopid, localxml)
-    print (format_departures(departures, deviations, journey, limitresults, platform_number, platform_number_prefix, line_number, api_latency))
+    print (format_departures(departures, deviations, journey, limitresults, platform_prefix, line_number, api_latency))
     print ('Waited %0.3f s for ruter.no to respond' % api_latency)
 
     sys.exit(0)
