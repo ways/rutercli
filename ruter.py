@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-system_version = '0.8'
+system_version = '0.9'
 system_name = 'ruter.py'
 
 from tabulate import tabulate
