@@ -247,7 +247,7 @@ def get_stopid(stopname):
         else:
             selected_stop = list(stops.keys())[0]
             stopid = stops[selected_stop]
-            messages += "Avganger fra %s, oppdatert %s" \
+            messages += "Avganger fra %s, oppdatert %s\n" \
                 % (selected_stop, bldwht + datetime.datetime.now().strftime("%H:%M") + txtrst)
             status = 0
 
