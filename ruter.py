@@ -96,6 +96,15 @@ line_number = None
 platform_prefix = None
 show_colors = True
 
+class columns:
+    LINE = 'Linje'
+    DESTINATION = 'Destinasjon'
+    PLATFORM = 'Plattform'
+    OCCUPANCY = 'Full'
+    TIME = 'Tid (forsink.)'
+    JOURNEY = 'Turnummer'
+    DEVIATION = 'Avvik'
+
 def usage():
     print('Bruk: %s [-a] [-l] [-n] [-v] <stasjonsnavn|stasjonsid>' % sys.argv[0])
     print('''
@@ -438,7 +447,7 @@ def to_table(departures):
     last_direction=None
 
     for counter, departure in enumerate(departures):
-        line = {}
+        row = {}
         # Add a blank entry when switching platforms
         if last_direction and last_direction != departure['DeparturePlatformName']:
             result.append({});
@@ -453,28 +462,29 @@ def to_table(departures):
             symbol = TransportationType[departure['VehicleMode']] + " "
         icon = '{:<4.4}'.format(symbol if departure['NumberOfBlockParts'] in [0,1,3] else symbol + symbol)
 
-        line['Linje'] = departure['PublishedLineName']
-        if show_colors:
-            line['Linje'] = "%s%s %s %s" % (txtblk, colormap(line['Linje']), departure['PublishedLineName'], txtrst)
 
-        line['Linje'] = icon + line['Linje']
-        line['Destinasjon'] = departure['DestinationName']
-        line['Plattform'] = departure['DeparturePlatformName']
-        line['Full'] = '{:<3.3}%'.format(departure['OccupancyPercentage'].rjust(3)) if -1 < int(departure['OccupancyPercentage']) else '  -   '
+        line = departure['PublishedLineName']
+        if show_colors:
+            line = "%s%s %s %s" % (txtblk, colormap(line), departure['PublishedLineName'], txtrst)
+
+        row[columns.LINE] = icon + line
+        row[columns.DESTINATION] = departure['DestinationName']
+        row[columns.PLATFORM] = departure['DeparturePlatformName']
+        row[columns.OCCUPANCY] = '{:<3.3}%'.format(departure['OccupancyPercentage'].rjust(3)) if -1 < int(departure['OccupancyPercentage']) else '  -   '
 
         delay = format_delay(departure['Delay'])
 
         # Time as HH:MM[kø] if today
         if departure['AimedDepartureTime'].day == datetime.date.today().day:
-            line['Tid (forsink.)'] = departure['AimedDepartureTime'].strftime("%H:%M") + \
+            row[columns.TIME] = departure['AimedDepartureTime'].strftime("%H:%M") + \
                           delay + \
                           ('kø' if 'true' == departure['InCongestion'] else '')
         else:
-            line['Tid (forsink.)'] = str(departure['AimedDepartureTime'])
+            row[columns.TIME] = str(departure['AimedDepartureTime'])
 
         # Journey
         if journey:
-            line['Turnummer'] = departure['VehicleJourneyName']
+            row[columns.JOURNEY] = departure['VehicleJourneyName']
 
         # Deviations
         if deviations:
@@ -483,10 +493,10 @@ def to_table(departures):
                 deviation_formatted += "(%s) %s " % (deviation, departure['Deviations'][deviation])
             if '' == deviation_formatted:
                 deviation_formatted = '-'
-            line['Avvik'] = deviation_formatted
+            row[columns.DEVIATION] = deviation_formatted
 
         # Done
-        result.append(line)
+        result.append(row)
     return result
 
 if __name__ == '__main__':
