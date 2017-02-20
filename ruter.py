@@ -19,6 +19,8 @@
 system_version = '0.8'
 system_name = 'ruter.py'
 
+from tabulate import tabulate
+
 import sys
 import datetime
 import time
