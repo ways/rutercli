@@ -1,7 +1,8 @@
 A python3 command line client for ruter.no, made using the API at http://labs.ruter.no/
 
-This client depends on the [tabulate](https://pypi.python.org/pypi/tabulate)
-Python package. To install it, run
+This client depends on the [tabulate](https://pypi.python.org/pypi/tabulate) and
+[colorama](https://pypi.python.org/pypi/colorama) Python packages.
+To install them, run
 ```
 python -m pip install -r requirements.txt
 ```

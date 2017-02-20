@@ -1,6 +1,5 @@
 TODO:
 * Selectable path for stopsfile
-* Colors for more lines
 * One-line interface for status bar
 * Split core functions to a library?
 * Improve webUI.
@@ -36,7 +35,7 @@ Platform 2 (Retning Østerås):
 
 Merging all repeating data:
 ```
-ruter.py lijordet 
+ruter.py lijordet
 Avganger fra lijordet, oppdatert 11:31
 
 Linje/Destinasjon                 Platform
@@ -64,4 +63,3 @@ Linje/Destinasjon                 Platform
 🚃 🚃    5 Østerås                  2 (Retning Østerås)
   11:34   11:44     11:49+1  12:04
 ```
-
