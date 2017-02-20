@@ -477,14 +477,14 @@ def to_table(departures):
         # Time as HH:MM[kø] if today
         if departure['AimedDepartureTime'].day == datetime.date.today().day:
             row[columns.TIME] = departure['AimedDepartureTime'].strftime("%H:%M") + \
-                          delay + \
-                          ('kø' if 'true' == departure['InCongestion'] else '')
+                          ('kø' if 'true' == departure['InCongestion'] else '') + \
+                          delay
         else:
             row[columns.TIME] = str(departure['AimedDepartureTime'])
 
         # Journey
         if journey:
-            row[columns.JOURNEY] = departure['VehicleJourneyName']
+            row[columns.JOURNEY] = str(departure['VehicleJourneyName'])
 
         # Deviations
         if deviations:
@@ -585,8 +585,7 @@ if __name__ == '__main__':
 
     departures, api_latency = get_departures(stopid, localxml)
     departures = filter_departures(departures)
-    table = to_table(departures)
-    print (tabulate(table, headers="keys", tablefmt=format))
+    print (tabulate(to_table(departures), headers="keys", tablefmt=format))
     latency_string = 'Waited %0.3f s for ruter.no to respond' % api_latency
     if not html:
         print(latency_string)
