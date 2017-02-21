@@ -8,7 +8,7 @@ TODO:
 * Make "time waiting for ruter" optional.
 * Separate icon for flybuss?
 * Update README with fresh examples and screenshots.
-
+* Document good fonts for unicode icons.
 
 SKETCHES:
 

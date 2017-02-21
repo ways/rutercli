@@ -113,4 +113,4 @@ Linje/Destinasjon                 Platform
   11:34   11:44     11:49+1  12:04
 ```
 
-Icon from https://materialdesignicons.com/
+Icons used in web version from https://materialdesignicons.com/
