@@ -18,3 +18,50 @@ One-liner:
 🚌 28 Fornebu fra vøyenbrua 15:49 (1 min)  15:59 (Kø, 11 min)  16:09 (21 min.)
 ```
 
+Separated on platform:
+```
+./ruter.py lijordet -n 2
+Avganger fra lijordet, oppdatert 12:21
+
+Linje/Destinasjon                 Full  Tid     Forsinkelse Avvik
+
+Platform 1 (Retning sentrum):
+Ⓣ Ⓣ    5 Vestli                     -   12:34   -           -
+Ⓣ Ⓣ    5 Vestli                     -   12:49   -           -
+
+Platform 2 (Retning Østerås):
+Ⓣ Ⓣ    5 Østerås                    -   12:22   PT136S      -
+Ⓣ Ⓣ    5 Østerås                    -   12:37   PT117S      -
+```
+
+Merging all repeating data:
+```
+ruter.py lijordet 
+Avganger fra lijordet, oppdatert 11:31
+
+Linje/Destinasjon                 Platform
+🚃 🚃    5 Vestli                   1 (Retning sentrum)
+ Full  Tid     Forsinkelse Avvik
+   -   11:34   -           -
+   -   11:44   -           -
+   -   11:49   -           -
+   -   12:04   -           -
+
+🚃 🚃    5 Vestli                   2 (Retning Østerås)
+ Full  Tid     Forsinkelse Avvik
+   -   11:34   -           -
+   -   11:44   -           -
+   -   11:49   -           -
+   -   12:04   -           -
+```
+
+Minimal:
+```
+Avganger fra lijordet, oppdatert 11:31
+Linje/Destinasjon                 Platform
+🚃 🚃    5 Vestli                   1 (Retning sentrum)
+  11:34   11:44+2   11:49    12:04
+🚃 🚃    5 Østerås                  2 (Retning Østerås)
+  11:34   11:44     11:49+1  12:04
+```
+

@@ -48,7 +48,6 @@ Several hits:
 ```
 $ ./ruter.py majorstuen
 Flere treff, angi mer nøyaktig:
-Flere treff, angi mer nøyaktig:
 [3010201] "majorstuen (i kirkeveien)"
 [3010200] "majorstuen [t-bane]"
 [3010202] "majorstuen (i sørkedalsveien)"
@@ -65,52 +64,5 @@ Linje/Destinasjon                 Platform            Full  Tid     Forsinkelse 
 ⛴    B10 Nesoddtangen             1                     -   23:45   -           -
 ```
 
-
-Separated on platform:
-```
-./ruter.py lijordet -n 2
-Avganger fra lijordet, oppdatert 12:21
-
-Linje/Destinasjon                 Full  Tid     Forsinkelse Avvik
-
-Platform 1 (Retning sentrum):
-Ⓣ Ⓣ    5 Vestli                     -   12:34   -           -
-Ⓣ Ⓣ    5 Vestli                     -   12:49   -           -
-
-Platform 2 (Retning Østerås):
-Ⓣ Ⓣ    5 Østerås                    -   12:22   PT136S      -
-Ⓣ Ⓣ    5 Østerås                    -   12:37   PT117S      -
-```
-
-Merging all repeating data:
-```
-ruter.py lijordet 
-Avganger fra lijordet, oppdatert 11:31
-
-Linje/Destinasjon                 Platform
-🚃 🚃    5 Vestli                   1 (Retning sentrum)
- Full  Tid     Forsinkelse Avvik
-   -   11:34   -           -
-   -   11:44   -           -
-   -   11:49   -           -
-   -   12:04   -           -
-
-🚃 🚃    5 Vestli                   2 (Retning Østerås)
- Full  Tid     Forsinkelse Avvik
-   -   11:34   -           -
-   -   11:44   -           -
-   -   11:49   -           -
-   -   12:04   -           -
-```
-
-Minimal:
-```
-Avganger fra lijordet, oppdatert 11:31
-Linje/Destinasjon                 Platform
-🚃 🚃    5 Vestli                   1 (Retning sentrum)
-  11:34   11:44+2   11:49    12:04
-🚃 🚃    5 Østerås                  2 (Retning Østerås)
-  11:34   11:44     11:49+1  12:04
-```
 
 Icons used in web version from https://materialdesignicons.com/
