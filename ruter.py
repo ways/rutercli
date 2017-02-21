@@ -105,6 +105,8 @@ class columns:
     JOURNEY = 'Turnummer'
     DEVIATION = 'Avvik'
 
+    order = [ LINE, DESTINATION, PLATFORM, OCCUPANCY, TIME, JOURNEY, DEVIATION ]
+
 def usage():
     print('Bruk: %s [-a] [-l] [-n] [-v] <stasjonsnavn|stasjonsid>' % sys.argv[0])
     print('''
@@ -470,7 +472,7 @@ def to_table(departures):
         row[columns.LINE] = icon + line
         row[columns.DESTINATION] = departure['DestinationName']
         row[columns.PLATFORM] = departure['DeparturePlatformName']
-        row[columns.OCCUPANCY] = '{:<3.3}%'.format(departure['OccupancyPercentage'].rjust(3)) if -1 < int(departure['OccupancyPercentage']) else '  -   '
+        row[columns.OCCUPANCY] = '{:<3.3}%'.format(departure['OccupancyPercentage'].rjust(3)) if -1 < int(departure['OccupancyPercentage']) else None
 
         delay = format_delay(departure['Delay'])
 
@@ -492,12 +494,25 @@ def to_table(departures):
             for deviation in departure['Deviations']:
                 deviation_formatted += "(%s) %s " % (deviation, departure['Deviations'][deviation])
             if '' == deviation_formatted:
-                deviation_formatted = '-'
+                deviation_formatted = None
             row[columns.DEVIATION] = deviation_formatted
 
         # Done
         result.append(row)
     return result
+
+''' Order columns according to columns.order '''
+def order_columns(rows):
+    # Find all columns with values
+    all = [c for r in rows for c in r if r[c] != None]
+    keys = [c for c in columns.order if c in all]
+
+    ordered = []
+    ordered.append(keys)
+    # Retrieve column from each row
+    for r in rows:
+        ordered.append([r.get(k, None) or '' for k in keys])
+    return ordered
 
 if __name__ == '__main__':
     stopname=''
@@ -585,7 +600,7 @@ if __name__ == '__main__':
 
     departures, api_latency = get_departures(stopid, localxml)
     departures = filter_departures(departures)
-    print (tabulate(to_table(departures), headers="keys", tablefmt=format))
+    print (tabulate(order_columns(to_table(departures)), headers="firstrow", tablefmt=format))
     latency_string = 'Waited %0.3f s for ruter.no to respond' % api_latency
     if not html:
         print(latency_string)
