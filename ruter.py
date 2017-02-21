@@ -16,8 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-system_version = '0.8'
+system_version = '0.9'
 system_name = 'ruter.py'
+
+from tabulate import tabulate
 
 import sys
 import datetime
@@ -83,13 +85,29 @@ apiurl = 'https://reisapi.ruter.no/stopvisit/getdepartures/'
 schema = '{http://schemas.datacontract.org/2004/07/Ruter.Reis.Api.Models}'
 stopsfile = '/tmp/GetStopsRuter.xml'
 stopsurl = 'http://reisapi.ruter.no/Place/GetStopsRuter'
+
 verbose = False
 ascii = False
 deviations = True
 journey = False
+html = False
+limitresults = 7
+line_number = None
+platform_prefix = None
+show_colors = True
 
+class columns:
+    LINE = 'Linje'
+    DESTINATION = 'Destinasjon'
+    PLATFORM = 'Plattform'
+    OCCUPANCY = 'Full'
+    TIME = 'Tid (forsink.)'
+    JOURNEY = 'Turnummer'
+    DEVIATION = 'Avvik'
 
-def usage(limitresults=5):
+    order = [ LINE, DESTINATION, PLATFORM, OCCUPANCY, TIME, JOURNEY, DEVIATION ]
+
+def usage():
     print('Bruk: %s [-a] [-l] [-n] [-v] <stasjonsnavn|stasjonsid>' % sys.argv[0])
     print('''
     -h       Vis denne hjelpen.
@@ -100,9 +118,8 @@ def usage(limitresults=5):
     -j       Vis turnummer.
     -l       Begrens treff til kun linje-nummer (kommaseparert).
     -n       Begrens treff pr. platform, tilbakefall er %s.
-    -o       En-linje-visning.
     -p       Begrens treff til platform-navn (prefix).
-    -P       Lenge på platformnavn (fra 0 og opp)
+    -w       Skriv ut HTML.
     -t       Bruk lokal fil ruter.temp som xml-kilde (kun for utvikling).
     -v       Verbose for utfyllende informasjon.
     ''' % limitresults)
@@ -312,6 +329,13 @@ def get_departures(stopid, localxml=None):
             pass
 
         departure['LineColour'] = MonitoredStopVisit.find(schema + 'Extensions').find(schema + 'LineColour')
+
+# TODO:
+# Look up deviation info:
+# sx/GetSituation/{situationNumber}
+# http://sirisx.ruter.no/help
+# i.e. http://sirisx.ruter.no/sx/GetSituation/42693
+
         departure['Deviations'] = {}
         for deviation in MonitoredStopVisit.find(schema + 'Extensions').find(schema + 'Deviations').getchildren(): #id, header
             departure['Deviations'][deviation.find(schema + 'ID').text] = deviation.find(schema + 'Header').text
@@ -384,233 +408,121 @@ def colormap(line):
     else:
         return txtwht
 
-''' Prepare main output '''
-def format_departures(departures, deviations, journey, limitresults=7,
-    platform_prefix = None, line_number=None, api_latency=None):
+''' Filter lines '''
+def filter_departures(departures):
+    filtered = []
+    directions = {}
 
-    if verbose:
-        print(departures[0])
+    for counter, departure in enumerate(departures):
+        # Limit results by line_number
+        if line_number:
+            if departure['PublishedLineName'] not in line_number:
+                continue
 
-    # Header
-    output="Linje/Destinasjon                 %s Full Tid (forsink.)" \
-        % ( '{0:{fill}{align}{width}}'.format('Platform           '[:platform_width],
-        fill=' ', align='<', width=platform_width) )
+        # Limit results by platform_prefix
+        if platform_prefix:
+            if platform_prefix.endswith('$'):
+                if departure['DeparturePlatformName'] != platform_prefix[:-1]:
+                    continue
+            elif not departure['DeparturePlatformName'].startswith(str(platform_prefix)):
+                continue
 
-    if journey:
-        output+= " Turnummer   "
-    if deviations:
-        output+= " Avvik"
-    output+="\n"
-    directions={}
+        # Keep list of platforms with number of hits
+        try:
+            if departure['DeparturePlatformName'] not in directions.keys():
+                directions[departure['DeparturePlatformName']] = 1
+            else:
+                directions[departure['DeparturePlatformName']] += 1
+        except TypeError:
+            pass
+
+        # Limit hits by platform
+        if directions[departure['DeparturePlatformName']] > limitresults:
+            continue
+        filtered.append(departure)
+    return filtered
+
+
+''' Format as table '''
+def to_table(departures):
+    result = []
     last_direction=None
 
     for counter, departure in enumerate(departures):
-        outputline=''
-
-        # Limit results by line_number
-        if line_number:
-            if departure['PublishedLineName'] not in line_number:
-                continue
-
-        # Limit results by platform_prefix
-        if platform_prefix:
-            if platform_prefix.endswith('$'):
-                if departure['DeparturePlatformName'] != platform_prefix[:-1]:
-                    continue
-            elif not departure['DeparturePlatformName'].startswith(str(platform_prefix)):
-                continue
-
-        # Keep list of platforms with number of hits
-        try:
-            if departure['DeparturePlatformName'] not in directions.keys():
-                directions[departure['DeparturePlatformName']] = 1
-            else:
-                directions[departure['DeparturePlatformName']] += 1
-        except TypeError:
-            pass
-
-        # Limit hits by platform
-        if directions[departure['DeparturePlatformName']] > limitresults:
-            continue
-
-        # Add a newline when switching platforms
+        row = {}
+        # Add a blank entry when switching platforms
         if last_direction and last_direction != departure['DeparturePlatformName']:
-            output += "\n"
+            result.append({});
         last_direction=departure['DeparturePlatformName']
 
-        ### Start outputting
+        ### Start formatting
 
         # Icon, double for long vehicles
-        icon = '{:<4.4}'.format(
-            (TransportationTypeAscii[departure['VehicleMode']]
-              if departure['NumberOfBlockParts'] in [0,1,3]
-              else TransportationTypeAscii[departure['VehicleMode']] + TransportationTypeAscii[departure['VehicleMode']] ))
-        if not ascii:
-            icon = '{0:{fill}{align}{width}}'.format(
-              (TransportationType[departure['VehicleMode']] + '  '
-                if departure['NumberOfBlockParts'] in [0,1,3]
-                else TransportationType[departure['VehicleMode']] + TransportationType[departure['VehicleMode']] ), fill='X', align='<', width=2)
+        if ascii:
+            symbol = TransportationTypeAscii[departure['VehicleMode']]
+        else:
+            symbol = TransportationType[departure['VehicleMode']] + " "
+        icon = '{:<4.4}'.format(symbol if departure['NumberOfBlockParts'] in [0,1,3] else symbol + symbol)
 
-        line_name = departure['PublishedLineName']
-        if showColors:
-            line_name = "%s%s %s %s" % (txtblk, colormap(line_name), departure['PublishedLineName'], txtrst)
 
-        outputline += "%s%s %s %s " % (
-          icon, # Icon for type of transportation
-          line_name, # Line number, name
-          txtrst,
-          '{:<24.24}'.format(departure['DestinationName'])
-        )
+        line = departure['PublishedLineName']
+        if show_colors:
+            line = "%s%s %s %s" % (txtblk, colormap(line), departure['PublishedLineName'], txtrst)
 
-        # platform_width
-        outputline += "%s" % ('{0:{fill}{align}{width}}'.format(departure['DeparturePlatformName'][:platform_width], fill=' ', align='<', width=platform_width))
-
-        # Occupancy
-        outputline += '{:<3.3}%  '.format(departure['OccupancyPercentage'].rjust(3)) if -1 < int(departure['OccupancyPercentage']) else '  -   '
+        row[columns.LINE] = icon + line
+        row[columns.DESTINATION] = departure['DestinationName']
+        row[columns.PLATFORM] = departure['DeparturePlatformName']
+        row[columns.OCCUPANCY] = '{:<3.3}%'.format(departure['OccupancyPercentage'].rjust(3)) if -1 < int(departure['OccupancyPercentage']) else None
 
         delay = format_delay(departure['Delay'])
 
         # Time as HH:MM[kø] if today
         if departure['AimedDepartureTime'].day == datetime.date.today().day:
-            outputline += '{:<15.15}'.format(departure['AimedDepartureTime'].strftime("%H:%M") + \
-                          delay +
-                          ('kø' if 'true' == departure['InCongestion'] else ''))
+            row[columns.TIME] = departure['AimedDepartureTime'].strftime("%H:%M") + \
+                          ('kø' if 'true' == departure['InCongestion'] else '') + \
+                          delay
         else:
-            outputline += "%s" % str(departure['AimedDepartureTime']).ljust(17)
+            row[columns.TIME] = str(departure['AimedDepartureTime'])
 
         # Journey
         if journey:
-            outputline += "%s" % str(departure['VehicleJourneyName']).ljust(13)
+            row[columns.JOURNEY] = str(departure['VehicleJourneyName'])
 
         # Deviations
-        deviation_formatted = ''
         if deviations:
+            deviation_formatted = ''
             for deviation in departure['Deviations']:
                 deviation_formatted += "(%s) %s " % (deviation, departure['Deviations'][deviation])
             if '' == deviation_formatted:
-                deviation_formatted = '-'
-
-# TODO:
-# Look up deviation info:
-# sx/GetSituation/{situationNumber}
-# http://sirisx.ruter.no/help
-# i.e. http://sirisx.ruter.no/sx/GetSituation/42693
+                deviation_formatted = None
+            row[columns.DEVIATION] = deviation_formatted
 
         # Done
-        output += outputline + deviation_formatted + "\n"
-    return output
+        result.append(row)
+    return result
 
+''' Order columns according to columns.order '''
+def order_columns(rows):
+    # Find all columns with values
+    all = [c for r in rows for c in r if r[c] != None]
+    keys = [c for c in columns.order if c in all]
 
-''' html formatting (ignoring ascii here) '''
-def htmlformat_departures(departures, deviations, journey, limitresults=7,
-    platform_prefix=None, line_number=None, api_latency=None):
-    if verbose:
-        print(departures[0])
-    output="<table><tr><th>Linje</th><th>Destinasjon</th><th>Platform</th><th>Full</th><th>Tid (forsinkelse)</th>"
-    if journey:
-        output+="<th>Turnummer</th>"
-    if deviations:
-        output+="<th>Avvik</th>"
-    output+="</tr>"
-
-    directions={}
-
-    for counter, departure in enumerate(departures):
-        outputline=''
-
-        # Limit results by line_number
-        if line_number:
-            if departure['PublishedLineName'] not in line_number:
-                continue
-
-        # Limit results by platform_prefix
-        if platform_prefix:
-            if platform_prefix.endswith('$'):
-                if departure['DeparturePlatformName'] != platform_prefix[:-1]:
-                    continue
-            elif not departure['DeparturePlatformName'].startswith(str(platform_prefix)):
-                continue
-
-        # Keep list of platforms with number of hits
-        try:
-            if departure['DeparturePlatformName'] not in directions.keys():
-                directions[departure['DeparturePlatformName']] = 1
-            else:
-                directions[departure['DeparturePlatformName']] += 1
-        except TypeError:
-            pass
-
-        # Limit hits by platform
-        #try:
-        if directions[departure['DeparturePlatformName']] > limitresults:
-            outputline += '<tr></tr>';
-            continue
-
-        # Start outputting
-
-        # Icon, double for long vehicles
-        icon = '{:<4.4}'.format(
-          (TransportationType[departure['VehicleMode']]
-            if departure['NumberOfBlockParts'] in [0,1,3]
-            else TransportationType[departure['VehicleMode']] + ' ' + TransportationType[departure['VehicleMode']] ))
-
-        outputline += "<tr><td>%s %s</td><td>%s</td><td>%s</td>" % (
-        # Icon for type of transportation
-          icon,
-        # Line number, name, platform
-          '{:<3.3}'.format(departure['PublishedLineName'].rjust(3)),
-          '{:<24.24}'.format(departure['DestinationName']),
-          '{:<19.19}'.format(departure['DeparturePlatformName'])
-        )
-
-        # Occupancy
-        outputline += '<td>{:<3.3}%</td>'.format(departure['OccupancyPercentage'].rjust(3)) if -1 < int(departure['OccupancyPercentage']) else '<td>-</td>'
-
-        delay = format_delay(departure['Delay'])
-
-        # Time as HH:MM[kø] if today
-        if departure['AimedDepartureTime'].day == datetime.date.today().day:
-            outputline += "<td>%s</td>" % ( str(departure['AimedDepartureTime'].strftime("%H:%M")) + \
-                ('kø' if 'true' == departure['InCongestion'] else '') + \
-                delay)
-        else:
-            outputline += "<td>%s</td>" % str(departure['AimedDepartureTime']).ljust(17)
-
-        # Journey
-        if journey:
-            outputline += "<td>%s</td>" % str(departure['VehicleJourneyName']).ljust(13)
-
-        # Deviations
-        deviation_formatted = ''
-        if deviations:
-            for deviation in departure['Deviations']:
-                deviation_formatted += "(%s) %s " % (deviation, departure['Deviations'][deviation])
-            if '' == deviation_formatted:
-                deviation_formatted = '-'
-
-        # Done
-        output += outputline + '<td>' + deviation_formatted + '</td></tr>'
-
-    output += "</table> <br/><br/> <small>Waited %0.3f s for ruter.no to respond.</small>" % api_latency
-    return output
-
+    ordered = []
+    ordered.append(keys)
+    # Retrieve column from each row
+    for r in rows:
+        ordered.append([r.get(k, None) or '' for k in keys])
+    return ordered
 
 if __name__ == '__main__':
     stopname=''
-    limitresults=7
     localxml=None
-    output=[]
-    line_number=None
-    platform_prefix=None
-    platform_width = 19
     stopid = None
-    api_latency = None
-    showColors = True
 
     args = sys.argv[1:]
 
     if '-h' in args:
-        usage(limitresults)
+        usage()
 
     if '-v' in args:
         verbose = True
@@ -663,13 +575,23 @@ if __name__ == '__main__':
         args.pop(args.index('-a'))
 
     if '-c' in args:
-        showColors = False
+        show_colors = False
         args.pop(args.index('-c'))
 
+    if '-w' in args:
+        html = True
+        args.pop(args.index('-w'))
+
     if len(args) < 1:
-        usage(limitresults)
+        usage()
     else:
         stopname = ''.join(args[0:])
+
+    format = 'simple'
+    if html:
+        format = 'html'
+        show_colors = False
+        ascii = True
 
     stopid, stopid_status, messages = get_stopid(stopname)
     print (messages)
@@ -677,7 +599,12 @@ if __name__ == '__main__':
         sys.exit(stopid_status)
 
     departures, api_latency = get_departures(stopid, localxml)
-    print (format_departures(departures, deviations, journey, limitresults, platform_prefix, line_number, api_latency))
-    print ('Waited %0.3f s for ruter.no to respond' % api_latency)
+    departures = filter_departures(departures)
+    print (tabulate(order_columns(to_table(departures)), headers="firstrow", tablefmt=format))
+    latency_string = 'Waited %0.3f s for ruter.no to respond' % api_latency
+    if not html:
+        print(latency_string)
+    else:
+        print ("<small>" + latency_string + "</small>")
 
     sys.exit(0)
