@@ -1,4 +1,4 @@
-A python3 client for ruter.no, made using the API at http://labs.ruter.no/
+A python3 command line client for ruter.no, made using the API at http://labs.ruter.no/
 
 This client depends on the [tabulate](https://pypi.python.org/pypi/tabulate)
 Python package. To install it, run
@@ -11,6 +11,9 @@ pip install -r requirements.txt
 ```
 
 GNU AFFERO GENERAL PUBLIC LICENSE
+
+Thanks to Børge Nordli for lots of patches.
+
 
 Example run of beta 0.6:
 
@@ -62,21 +65,6 @@ Linje/Destinasjon                 Platform            Full  Tid     Forsinkelse 
 ⛴    B10 Nesoddtangen             1                     -   23:45   -           -
 ```
 
-TODO:
-* Selectable path for stopsfile
-* Colors for lines
-* One-line interface for status bar
-* Split core functions to a library.
-* Improve webUI.
-* Show full description of delays (avvik).
-
-SKETCHES:
-
-One-liner:
-```
-./ruter.py vøyenbrua -o -l 28 -p 2
-🚌 28 Fornebu fra vøyenbrua 15:49 (1 min)  15:59 (Kø, 11 min)  16:09 (21 min.)
-```
 
 Separated on platform:
 ```
