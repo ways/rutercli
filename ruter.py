@@ -20,6 +20,9 @@ system_version = '0.9'
 system_name = 'ruter.py'
 
 from tabulate import tabulate
+from colors import line_color, colored
+from colorama import init, Fore, Style
+init()
 
 import sys
 import datetime
@@ -45,41 +48,6 @@ TransportationTypeAscii = {
     'tram':  'T',
     'metro': 'M',
 }
-
-# Define terminal colors
-txtblk='\033[0;30m' # Black - Regular
-txtred='\033[0;31m' # Red
-txtgrn='\033[0;32m' # Green
-txtylw='\033[0;33m' # Yellow
-txtblu='\033[0;34m' # Blue
-txtpur='\033[0;35m' # Purple
-txtcyn='\033[0;36m' # Cyan
-txtwht='\033[0;37m' # White
-bldblk='\033[1;30m' # Black - Bold
-bldred='\033[1;31m' # Red
-bldgrn='\033[1;32m' # Green
-bldylw='\033[1;33m' # Yellow
-bldblu='\033[1;34m' # Blue
-bldpur='\033[1;35m' # Purple
-bldcyn='\033[1;36m' # Cyan
-bldwht='\033[1;37m' # White
-unkblk='\033[4;30m' # Black - Underline
-undred='\033[4;31m' # Red
-undgrn='\033[4;32m' # Green
-undylw='\033[4;33m' # Yellow
-undblu='\033[4;34m' # Blue
-undpur='\033[4;35m' # Purple
-undcyn='\033[4;36m' # Cyan
-undwht='\033[4;37m' # White
-bakblk='\033[40m'   # Black - Background
-bakred='\033[41m'   # Red
-bakgrn='\033[42m'   # Green
-bakylw='\033[43m' #'\033[43m'   # Yellow
-bakblu='\033[44m'   # Blue
-bakpur='\033[45m'   # Purple
-bakcyn='\033[46m'   # Cyan
-bakwht='\033[47m'   # White
-txtrst='\033[0m'    # Text Reset
 
 apiurl = 'https://reisapi.ruter.no/stopvisit/getdepartures/'
 schema = '{http://schemas.datacontract.org/2004/07/Ruter.Reis.Api.Models}'
@@ -127,7 +95,7 @@ def usage():
     for icon in TransportationType:
         print (icon, TransportationType[icon])
 
-    print(system_name, txtblu + 'version' + txtrst, system_version)
+    print(system_name, colored(Fore.BLUE, 'version'), system_version)
     sys.exit(1)
 
 
@@ -267,7 +235,7 @@ def get_stopid(stopname):
             selected_stop = list(stops.keys())[0]
             stopid = stops[selected_stop]
             messages += "Avganger fra %s, oppdatert %s\n" \
-                % (selected_stop, bldwht + datetime.datetime.now().strftime("%H:%M") + txtrst)
+                % (selected_stop, colored(Style.BRIGHT, datetime.datetime.now().strftime("%H:%M")))
             status = 0
 
     else:
@@ -391,22 +359,6 @@ def format_delay(delay):
     formatted += ')'
     return formatted
 
-def colormap(line):
-    # Map ruter line numbers to terminal safe colors
-    if '1' == line:
-        return bakcyn
-    elif line in ['2', '18', '19', '33', '51', '60']:
-        return bakylw
-    elif line in ['3', '12', '34']:
-        return bakpur
-    elif line in ['4', '21', '54', '56', '70']:
-        return bakblu
-    elif line in ['5', '11', '13', '30', '58']:
-        return bakgrn
-    elif line in ['17', '20', '28', '37']:
-        return bakred
-    else:
-        return txtwht
 
 ''' Filter lines '''
 def filter_departures(departures):
@@ -467,7 +419,7 @@ def to_table(departures):
 
         line = departure['PublishedLineName']
         if show_colors:
-            line = "%s%s %s %s" % (txtblk, colormap(line), departure['PublishedLineName'], txtrst)
+            line = line_color(line)
 
         row[columns.LINE] = icon + line
         row[columns.DESTINATION] = departure['DestinationName']
