@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-# Copyright 2015-2017 Lars Falk-Petersen <dev@falkp.no>.
+# Copyright 2015-2018 Lars Falk-Petersen <dev@falkp.no>.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -413,10 +413,11 @@ def to_table(departures):
         if ascii:
             symbol = TransportationTypeAscii[departure['VehicleMode']]
         else:
-            symbol = TransportationType[departure['VehicleMode']] + " "
-        icon = '{:<4.4}'.format(symbol if departure['NumberOfBlockParts'] in [0,1,3] else symbol + symbol)
+            symbol = TransportationType[departure['VehicleMode']]
+        icon = '{:<2.2}'.format(symbol if departure['NumberOfBlockParts'] in [0,1,3] else symbol + symbol)
+               # padding, truncate. https://pyformat.info/
 
-
+        # TODO: pad/trunc line name
         line = departure['PublishedLineName']
         if show_colors:
             line = line_color(line)
