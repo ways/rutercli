@@ -1,23 +1,10 @@
-A python3 command line client for ruter.no, made using the API at http://labs.ruter.no/
+# Rutercli
 
-This client depends on the [tabulate](https://pypi.python.org/pypi/tabulate) and
-[colorama](https://pypi.python.org/pypi/colorama) Python packages.
-To install them, run
-```
-python -m pip install -r requirements.txt
-```
-or, for legacy versions of Python:
-```
-pip install -r requirements.txt
-```
+A python command line client for ruter.no, made using the API at http://labs.ruter.no/
 
-GNU AFFERO GENERAL PUBLIC LICENSE
+See INSTALL.md
 
-Thanks to Børge Nordli for lots of patches.
-
-
-Example run of beta 0.6:
-
+## Example run of 0.6:
 
 Direct hit:
 
@@ -65,5 +52,13 @@ Linje/Destinasjon                 Platform            Full  Tid     Forsinkelse 
 ⛴    B10 Nesoddtangen             1                     -   23:45   -           -
 ```
 
+## Web
+https://graph.no/ruter/
 
-Icons used in web version from https://materialdesignicons.com/
+## License
+GNU AFFERO GENERAL PUBLIC LICENSE
+
+## Thanks
+* Icons used in web version from https://materialdesignicons.com/
+* Thanks to Børge Nordli for lots of patches.
+* Thanks to atchoo78 @ github for mac install how-to
